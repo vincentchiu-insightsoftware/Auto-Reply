@@ -1,0 +1,6 @@
+node_modules/
+dist/
+runtime/
+fixtures/*/frames/
+*.local.json
+.env

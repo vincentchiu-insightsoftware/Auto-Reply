@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "repository": "vincentchiu-insightsoftware/Auto-Reply",
+  "updated_at": "2026-09-22",
+  "plan": "docs/PROJECT_PLAN.md",
+  "current_step": 1,
+  "steps": [
+    {
+      "step": 1,
+      "name": "離線 mock 管線",
+      "state": "IN_PROGRESS",
+      "needs_from_user": [],
+      "deliverables": ["src/", "fixtures/scenario-a/", "tests/", "reports/STEP1_MOCK_REPORT.md"],
+      "commands_and_exit_codes": []
+    },
+    {
+      "step": 2,
+      "name": "真實內容，輸出測試影片",
+      "state": "NOT_STARTED",
+      "needs_from_user": ["遊戲影片檔", "Claude API 金鑰放置方式", "語音服務選擇與金鑰", "角色設定", "費用上限"]
+    },
+    {
+      "step": 3,
+      "name": "接 Kick，雲端試播",
+      "state": "NOT_STARTED",
+      "needs_from_user": ["Kick 開發者應用程式與授權", "串流金鑰", "AI 標示決定"]
+    },
+    {
+      "step": 4,
+      "name": "全自動無人值守",
+      "state": "NOT_STARTED",
+      "needs_from_user": []
+    }
+  ],
+  "runtime_validation": {
+    "video_frames": "NOT_TESTED",
+    "kick_chat": "NOT_TESTED",
+    "model": "NOT_TESTED",
+    "tts": "NOT_TESTED",
+    "stream_push": "NOT_TESTED",
+    "unattended_2h": "NOT_TESTED"
+  }
+}
