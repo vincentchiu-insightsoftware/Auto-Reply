@@ -6,7 +6,8 @@
 
 1. [專案規劃 v0.2](docs/PROJECT_PLAN.md)：目標、規則、架構、階段、風險、需要使用者準備的事。
 2. [與上游文件的差異](docs/UPSTREAM_DIFF.md)：本專案沿用與改動 firekou/Auto_Reply_Bot 規劃的地方。
-3. [工作狀態](project/WORK_LEDGER.json)：目前進度與下一步。
+3. [語音服務選擇](docs/TTS_SELECTION.md)：為什麼選 Azure、怎麼做發音試聽。
+4. [工作狀態](project/WORK_LEDGER.json)：目前進度與下一步。
 
 ## 目前狀態
 
@@ -22,6 +23,7 @@ npm run replay           # 虛擬時鐘回播並印出報告
 node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --out runtime/logs/r.jsonl --inject-estop 10
 node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --realtime --limit-minutes 2   # 實時模式，stdin 可輸入 pause/resume/estop/stop/status
 node dist/src/cli.js doctor
+AZURE_SPEECH_KEY=... AZURE_SPEECH_REGION=eastasia node dist/src/cli.js tts-test   # 發音試聽包（需要金鑰）
 ```
 
 ## 程式結構
@@ -31,7 +33,8 @@ src/types.ts            五個介面：FrameSource、ChatSource、ModelProvider�
 src/director/           Director（候選槽、狀態機、取消防護）、驗證器、本機分類、預算
 src/context/            去重、短期記憶、角色與參考資料
 src/sources/mock.ts     依 fixture 時間軸回放的畫面與留言來源
-src/providers/          mock 模型（可腳本化故障）、mock TTS
+src/providers/          mock 模型（可腳本化故障）、mock TTS、Azure TTS（REST + SSML 詞典，NOT_TESTED）
+src/tts-test.ts         發音試聽包產生器
 src/audio/              離線播放器
 src/fixtures/           合成 fixture 產生器與假畫面繪製
 src/replay.ts           回播 harness（VirtualClock）

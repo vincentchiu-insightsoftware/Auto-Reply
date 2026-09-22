@@ -10,6 +10,7 @@ import { generateScenario, scenarioDigest, scenarioExists } from './fixtures/gen
 import { runReplay } from './replay.js';
 import { buildReport, readEvents, renderReport } from './report.js';
 import { attachStdinControl } from './control/stdin.js';
+import { runTtsTest, defaultVoices } from './tts-test.js';
 
 function arg(args: string[], name: string, dflt: string | null = null): string | null {
   const i = args.indexOf(name);
@@ -82,7 +83,7 @@ async function main(argv: string[]): Promise<number> {
         { name: 'config_loads', status: 'UNKNOWN', detail: '' },
         { name: 'video_file', status: 'SKIPPED', detail: '第二步才接真影片' },
         { name: 'model_credentials', status: 'SKIPPED', detail: '第一步不讀金鑰' },
-        { name: 'tts_credentials', status: 'SKIPPED', detail: '第一步不讀金鑰' },
+        { name: 'tts_credentials', status: process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION ? 'OK' : 'MISSING', detail: process.env.AZURE_SPEECH_KEY ? `region=${process.env.AZURE_SPEECH_REGION}（只檢查有無設定，未實際呼叫）` : '未設定 AZURE_SPEECH_KEY / AZURE_SPEECH_REGION' },
         { name: 'audio_device', status: 'SKIPPED', detail: '雲端環境無音效裝置' },
         { name: 'kick_webhook', status: 'SKIPPED', detail: '第三步才接 Kick' },
       ];
@@ -94,14 +95,35 @@ async function main(argv: string[]): Promise<number> {
         checks[1]!.detail = (e as Error).message;
       }
       console.log(JSON.stringify({ checks, note: 'SKIPPED 不等於通過' }, null, 2));
-      return checks.some((c) => c.status === 'FAIL') ? 1 : 0;
+      return checks.some((c) => c.status === 'FAIL') ? 1 : 0; // MISSING 與 SKIPPED 不算失敗，但也不算通過
+    }
+    case 'tts-test': {
+      if (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION) {
+        console.error('需要環境變數 AZURE_SPEECH_KEY 與 AZURE_SPEECH_REGION。沒有金鑰就不產生任何音檔（不做假結果）。');
+        return 2;
+      }
+      const voicesArg = arg(args, '--voices', null);
+      const limit = arg(args, '--limit', null);
+      const lex = arg(args, '--lexicon', 'config/lexicon.zh-TW.json');
+      const r = await runTtsTest({
+        sentencesPath: resolve(arg(args, '--sentences', 'fixtures/pronunciation/sentences.json')!),
+        outDir: resolve(arg(args, '--out', 'runtime/tts-test')!),
+        voices: voicesArg ? voicesArg.split(',') : defaultVoices(),
+        lexiconPath: lex && lex !== 'none' ? resolve(lex) : null,
+        limit: limit ? Number(limit) : null,
+        timeoutMs: Number(arg(args, '--timeout-ms', '15000')),
+        rate: Number(arg(args, '--rate', '1')),
+      });
+      console.log(JSON.stringify({ ...r, indexFile: resolve(arg(args, '--out', 'runtime/tts-test')!, 'index.md') }, null, 2));
+      return r.failures > 0 ? 1 : 0;
     }
     default:
-      console.error('用法：arb <fixtures|replay|report|doctor> [options]');
+      console.error('用法：arb <fixtures|replay|report|doctor|tts-test> [options]');
       console.error('  fixtures --scenario DIR --minutes N --seed S [--write-frames]');
       console.error('  replay --scenario DIR --config FILE --out FILE.jsonl [--inject-estop N] [--realtime] [--limit-minutes N] [--report-json FILE]');
       console.error('  report FILE.jsonl [--json] [--transcript N]');
       console.error('  doctor [--config FILE]');
+      console.error('  tts-test [--voices a,b] [--limit N] [--lexicon FILE|none] [--out DIR]   需要 AZURE_SPEECH_KEY / AZURE_SPEECH_REGION');
       return 2;
   }
 }
