@@ -11,6 +11,18 @@ import { runReplay } from './replay.js';
 import { buildReport, readEvents, renderReport } from './report.js';
 import { attachStdinControl } from './control/stdin.js';
 import { runTtsTest, defaultVoices } from './tts-test.js';
+import { validateAzureCredentials } from './providers/azure-tts.js';
+
+
+/** doctor 用：只檢查憑證有無與格式，不實際呼叫。格式錯（例如貼成中文佔位字）算 FAIL，因為 tts-test 一定跑不起來。 */
+function ttsCredentialCheck(): { name: string; status: 'OK' | 'MISSING' | 'FAIL'; detail: string } {
+  const key = process.env.AZURE_SPEECH_KEY ?? '';
+  const region = process.env.AZURE_SPEECH_REGION ?? '';
+  if (!key || !region) return { name: 'tts_credentials', status: 'MISSING', detail: '未設定 AZURE_SPEECH_KEY / AZURE_SPEECH_REGION' };
+  const bad = validateAzureCredentials(key, region);
+  if (bad) return { name: 'tts_credentials', status: 'FAIL', detail: bad };
+  return { name: 'tts_credentials', status: 'OK', detail: `region=${region}（只檢查有無設定與格式，未實際呼叫）` };
+}
 
 function arg(args: string[], name: string, dflt: string | null = null): string | null {
   const i = args.indexOf(name);
@@ -83,7 +95,7 @@ async function main(argv: string[]): Promise<number> {
         { name: 'config_loads', status: 'UNKNOWN', detail: '' },
         { name: 'video_file', status: 'SKIPPED', detail: '第二步才接真影片' },
         { name: 'model_credentials', status: 'SKIPPED', detail: '第一步不讀金鑰' },
-        { name: 'tts_credentials', status: process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION ? 'OK' : 'MISSING', detail: process.env.AZURE_SPEECH_KEY ? `region=${process.env.AZURE_SPEECH_REGION}（只檢查有無設定，未實際呼叫）` : '未設定 AZURE_SPEECH_KEY / AZURE_SPEECH_REGION' },
+        ttsCredentialCheck(),
         { name: 'audio_device', status: 'SKIPPED', detail: '雲端環境無音效裝置' },
         { name: 'kick_webhook', status: 'SKIPPED', detail: '第三步才接 Kick' },
       ];

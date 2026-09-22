@@ -60,7 +60,9 @@
       "needs_from_user": [
         "遊戲影片檔",
         "Claude API 金鑰放置方式（環境變數名稱）",
-        "Azure Speech 金鑰與區域（AZURE_SPEECH_KEY / AZURE_SPEECH_REGION），並完成發音試聽選聲音",
+        "AZURE_SPEECH_KEY 換成真金鑰（目前是中文佔位文字，第 1 字元 U+628A），區域 eastasia 已設",
+        "執行環境網路政策放行 *.tts.speech.microsoft.com（目前 CONNECT 被 403 拒絕），或改在本機跑 tts-test",
+        "完成發音試聽並選聲音",
         "費用上限"
       ],
       "decisions": {
@@ -70,7 +72,25 @@
       },
       "progress": [
         "Azure TTS 接口與單元測試完成（NOT_TESTED 真實呼叫）",
-        "發音試聽包 tts-test 完成"
+        "發音試聽包 tts-test 完成",
+        "2026-09-22 首次真實執行 tts-test：0 音檔。阻塞兩項（金鑰為佔位文字、網路擋 Azure），見 reports/TTS_TEST_2026-09-22.md",
+        "憑證格式檢查加入 provider 與 doctor；tts-test 憑證錯誤時寫入清單不再崩潰"
+      ],
+      "tts_test_runs": [
+        {
+          "date": "2026-09-22",
+          "branch": "claude/peaceful-newton-hial7c",
+          "command": "node dist/src/cli.js tts-test",
+          "exit_code": 1,
+          "files": 0,
+          "failures": 120,
+          "chars": 0,
+          "blockers": [
+            "AZURE_SPEECH_KEY 非 ASCII（U+628A 開頭，佔位文字）",
+            "egress proxy 403 on eastasia.tts.speech.microsoft.com:443"
+          ],
+          "report": "reports/TTS_TEST_2026-09-22.md"
+        }
       ]
     },
     {
@@ -94,7 +114,7 @@
     "video_frames": "NOT_TESTED",
     "kick_chat": "NOT_TESTED",
     "model": "NOT_TESTED",
-    "tts": "NOT_TESTED (adapter written, awaiting key)",
+    "tts": "NOT_TESTED (adapter written; 2026-09-22 real call attempted, blocked by placeholder key + network policy)",
     "stream_push": "NOT_TESTED",
     "unattended_2h": "NOT_TESTED",
     "mock_pipeline": "TESTED"

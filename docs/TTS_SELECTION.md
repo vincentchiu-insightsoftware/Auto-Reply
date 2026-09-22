@@ -47,4 +47,6 @@ node dist/src/cli.js tts-test --voices zh-TW-HsiaoChenNeural --limit 10   # 先�
 
 ## 狀態
 
+2026-09-22 更新：在雲端環境第一次嘗試真實呼叫，**沒有產生音檔**。兩個阻塞：（1）`AZURE_SPEECH_KEY` 環境變數裡是中文佔位文字，不是金鑰；（2）執行環境的網路政策擋住 `*.tts.speech.microsoft.com`。詳見 `reports/TTS_TEST_2026-09-22.md`，裡面也有 40 句試聽清單可直接打勾。順帶把「金鑰含非 ASCII」改成明確錯誤，doctor 也會檢查。
+
 Azure 接口程式已寫好並有單元測試（SSML 組裝、詞典包裝、WAV 時長、HTTP 錯誤分流），但**尚未用真實金鑰呼叫過**，標 NOT_TESTED。zh-TW 的 sapi 音標格式依官方文件的 zh-CN 範例推定相同，首次真實呼叫時要確認 400 錯誤是否出現。
