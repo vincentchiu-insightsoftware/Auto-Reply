@@ -50,7 +50,7 @@
       ],
       "report": "reports/STEP1_MOCK_REPORT.md",
       "fixture_digest": "2bed4bf2c989fe1248bf917aeabf4c3ed971f3e7778b9661c5ab86be1666dd1c",
-      "content_head": null,
+      "content_head": "d1d45426148f50746bb649e00340dd068bac7ee7",
       "content_head_note": "程式 commit 的 SHA 由後續證據 commit 填入，不在同一 commit 自引用"
     },
     {
