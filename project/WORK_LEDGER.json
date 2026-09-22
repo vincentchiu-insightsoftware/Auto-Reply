@@ -3,27 +3,77 @@
   "repository": "vincentchiu-insightsoftware/Auto-Reply",
   "updated_at": "2026-09-22",
   "plan": "docs/PROJECT_PLAN.md",
-  "current_step": 1,
+  "current_step": 2,
   "steps": [
     {
       "step": 1,
       "name": "離線 mock 管線",
-      "state": "IN_PROGRESS",
+      "state": "DONE_MOCK_ONLY",
       "needs_from_user": [],
-      "deliverables": ["src/", "fixtures/scenario-a/", "tests/", "reports/STEP1_MOCK_REPORT.md"],
-      "commands_and_exit_codes": []
+      "deliverables": [
+        "src/",
+        "fixtures/scenario-a/",
+        "tests/",
+        "reports/STEP1_MOCK_REPORT.md"
+      ],
+      "commands_and_exit_codes": [
+        {
+          "command": "npm ci",
+          "exit_code": 0
+        },
+        {
+          "command": "npm run build",
+          "exit_code": 0
+        },
+        {
+          "command": "npm test",
+          "exit_code": 0,
+          "note": "38 tests, 38 pass"
+        },
+        {
+          "command": "node dist/src/cli.js fixtures --scenario fixtures/scenario-a --minutes 30 --seed 42",
+          "exit_code": 0
+        },
+        {
+          "command": "node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --out runtime/logs/replay-a.jsonl --inject-estop 10",
+          "exit_code": 0
+        },
+        {
+          "command": "node dist/src/cli.js report runtime/logs/replay-a.jsonl",
+          "exit_code": 0
+        },
+        {
+          "command": "node dist/src/cli.js doctor",
+          "exit_code": 0,
+          "note": "設備檢查 SKIPPED"
+        }
+      ],
+      "report": "reports/STEP1_MOCK_REPORT.md",
+      "fixture_digest": "2bed4bf2c989fe1248bf917aeabf4c3ed971f3e7778b9661c5ab86be1666dd1c",
+      "content_head": null,
+      "content_head_note": "程式 commit 的 SHA 由後續證據 commit 填入，不在同一 commit 自引用"
     },
     {
       "step": 2,
       "name": "真實內容，輸出測試影片",
-      "state": "NOT_STARTED",
-      "needs_from_user": ["遊戲影片檔", "Claude API 金鑰放置方式", "語音服務選擇與金鑰", "角色設定", "費用上限"]
+      "state": "WAITING_FOR_USER_INPUT",
+      "needs_from_user": [
+        "遊戲影片檔",
+        "Claude API 金鑰放置方式",
+        "語音服務選擇與金鑰",
+        "角色設定",
+        "費用上限"
+      ]
     },
     {
       "step": 3,
       "name": "接 Kick，雲端試播",
       "state": "NOT_STARTED",
-      "needs_from_user": ["Kick 開發者應用程式與授權", "串流金鑰", "AI 標示決定"]
+      "needs_from_user": [
+        "Kick 開發者應用程式與授權",
+        "串流金鑰",
+        "AI 標示決定"
+      ]
     },
     {
       "step": 4,
@@ -38,6 +88,7 @@
     "model": "NOT_TESTED",
     "tts": "NOT_TESTED",
     "stream_push": "NOT_TESTED",
-    "unattended_2h": "NOT_TESTED"
+    "unattended_2h": "NOT_TESTED",
+    "mock_pipeline": "TESTED"
   }
 }

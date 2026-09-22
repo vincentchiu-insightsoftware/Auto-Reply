@@ -10,7 +10,35 @@
 
 ## 目前狀態
 
-2026-09-22：規劃定案，開始第一步「離線 mock 管線」。尚無可執行程式，尚未接任何真實服務，尚未直播。
+2026-09-22：第一步「離線 mock 管線」完成（見 [reports/STEP1_MOCK_REPORT.md](reports/STEP1_MOCK_REPORT.md)）。38 個測試通過，30 分鐘場景可用一個命令重播。尚未接任何真實服務，尚未直播；真實項目全部 NOT_TESTED。
+
+## 快速開始
+
+```
+npm ci
+npm test                 # 建置 + 38 個測試
+npm run fixtures         # 產生 30 分鐘合成場景（可重生，同 seed 同結果）
+npm run replay           # 虛擬時鐘回播並印出報告
+node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --out runtime/logs/r.jsonl --inject-estop 10
+node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --realtime --limit-minutes 2   # 實時模式，stdin 可輸入 pause/resume/estop/stop/status
+node dist/src/cli.js doctor
+```
+
+## 程式結構
+
+```
+src/types.ts            五個介面：FrameSource、ChatSource、ModelProvider、TtsProvider、AudioPlayer
+src/director/           Director（候選槽、狀態機、取消防護）、驗證器、本機分類、預算
+src/context/            去重、短期記憶、角色與參考資料
+src/sources/mock.ts     依 fixture 時間軸回放的畫面與留言來源
+src/providers/          mock 模型（可腳本化故障）、mock TTS
+src/audio/              離線播放器
+src/fixtures/           合成 fixture 產生器與假畫面繪製
+src/replay.ts           回播 harness（VirtualClock）
+src/report.ts           指標與報告
+src/cli.ts              arb CLI
+tests/                  38 個測試
+```
 
 ## 四個階段
 

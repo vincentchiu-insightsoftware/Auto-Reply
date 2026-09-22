@@ -1,0 +1,110 @@
+{
+  "scenario": "scenario-a",
+  "seed": 42,
+  "minutes": 30,
+  "durationMs": 1800000,
+  "frameIntervalMs": 2000,
+  "roundChanges": [
+    {
+      "atMs": 180000,
+      "round": 2
+    },
+    {
+      "atMs": 364044,
+      "round": 3
+    },
+    {
+      "atMs": 541976,
+      "round": 4
+    },
+    {
+      "atMs": 736075,
+      "round": 5
+    },
+    {
+      "atMs": 922865,
+      "round": 6
+    },
+    {
+      "atMs": 1089857,
+      "round": 7
+    },
+    {
+      "atMs": 1270921,
+      "round": 8
+    },
+    {
+      "atMs": 1441850,
+      "round": 9
+    },
+    {
+      "atMs": 1626840,
+      "round": 10
+    }
+  ],
+  "frameBlack": {
+    "fromMs": 420000,
+    "toMs": 430000
+  },
+  "frameFrozen": {
+    "fromMs": 720000,
+    "toMs": 740000
+  },
+  "chatOutage": {
+    "fromMs": 1200000,
+    "toMs": 1290000
+  },
+  "providerFaults": [
+    {
+      "atMs": 240000,
+      "durationMs": 20000,
+      "kind": "model_timeout"
+    },
+    {
+      "atMs": 540000,
+      "durationMs": 15000,
+      "kind": "model_rate_limit"
+    },
+    {
+      "atMs": 840000,
+      "durationMs": 15000,
+      "kind": "model_malformed"
+    },
+    {
+      "atMs": 930000,
+      "durationMs": 15000,
+      "kind": "model_overlong"
+    },
+    {
+      "atMs": 990000,
+      "durationMs": 15000,
+      "kind": "model_human_claim"
+    },
+    {
+      "atMs": 1080000,
+      "durationMs": 15000,
+      "kind": "tts_fail"
+    },
+    {
+      "atMs": 1380000,
+      "durationMs": 15000,
+      "kind": "model_late"
+    },
+    {
+      "atMs": 1500000,
+      "durationMs": 8000,
+      "kind": "device_lost"
+    },
+    {
+      "atMs": 1560000,
+      "durationMs": 40000,
+      "kind": "model_timeout"
+    },
+    {
+      "atMs": 1740000,
+      "durationMs": 20000,
+      "kind": "model_spend_limit"
+    }
+  ],
+  "estops": []
+}

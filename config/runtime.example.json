@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.2",
+  "mode": "mock",
+  "persona_path": "fixtures/scenario-a/persona.json",
+  "reference_path": "fixtures/scenario-a/reference.md",
+  "capture": {
+    "frame_interval_ms": 2000,
+    "chat_interval_ms": 1000,
+    "max_image_long_edge": 960,
+    "max_images_per_request": 1
+  },
+  "director": {
+    "tick_ms": 250,
+    "min_model_interval_ms": 5000,
+    "max_calls_per_minute": 12,
+    "game_event_ttl_ms": 12000,
+    "chat_ttl_ms": 30000,
+    "recent_spoken_count": 10,
+    "max_chat_messages": 20,
+    "max_chat_characters": 2000,
+    "max_reference_characters": 4000,
+    "idle_comment_interval_ms": 45000
+  },
+  "model": {
+    "provider": "mock",
+    "model_id": null,
+    "timeout_ms": 8000,
+    "max_output_tokens": 180,
+    "retries_per_event": 0
+  },
+  "tts": {
+    "provider": "mock",
+    "voice_id": null,
+    "timeout_ms": 5000,
+    "retries_per_event": 0
+  },
+  "speech": {
+    "min_sentences": 1,
+    "max_sentences": 3,
+    "max_characters": 80,
+    "target_min_characters": 20,
+    "max_input_message_characters": 300
+  },
+  "audio": {
+    "device_id": null,
+    "exclusive_player": true,
+    "emergency_stop_target_ms": 1000
+  },
+  "budget": {
+    "billing_mode": "fake",
+    "hourly_usd_limit": 5.0,
+    "session_usd_limit": 10.0,
+    "price_table_version": "fake-0.1 (假費率，只驗證預留與結算邏輯)",
+    "price_table": { "input_per_mtok": 1.0, "output_per_mtok": 5.0, "tts_per_mchar": 15.0 }
+  },
+  "recovery": {
+    "consecutive_failures_before_pause": 3,
+    "cooldown_ms": 30000,
+    "auto_reset_error_after_ms": 30000
+  },
+  "identity": {
+    "skip_identity_questions": true,
+    "block_human_claims": true
+  }
+}

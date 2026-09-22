@@ -1,0 +1,20 @@
+{
+  "name": "auto-reply-host",
+  "version": "0.1.0",
+  "private": true,
+  "description": "全自動 AI 遊戲直播主：預錄影片講評 + Kick 留言回覆。第一步為離線 mock 管線。",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "bin": { "arb": "dist/src/cli.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/tests/**/*.test.js\"",
+    "fixtures": "node dist/src/cli.js fixtures --scenario fixtures/scenario-a --minutes 30 --seed 42",
+    "replay": "node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --out runtime/logs/replay-a.jsonl",
+    "report": "node dist/src/cli.js report runtime/logs/replay-a.jsonl"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.0"
+  }
+}
