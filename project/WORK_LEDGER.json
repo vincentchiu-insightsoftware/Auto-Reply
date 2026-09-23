@@ -60,7 +60,8 @@
       "needs_from_user": [
         "試聽結果：選聲音、列出唸錯的字",
         "遊戲影片檔",
-        "Claude API 金鑰放置方式",
+        "Claude API 金鑰放置方式（環境變數名稱）",
+        "auto-reply 雲端環境的 AZURE_SPEECH_KEY 目前是中文佔位文字，需換成真金鑰；該環境網路政策也需放行 *.tts.speech.microsoft.com",
         "費用上限"
       ],
       "decisions": {
@@ -72,6 +73,31 @@
         "Azure TTS 接口實測通過（eastasia，Free F0）",
         "zh-TW phoneme 格式確認為注音符號",
         "發音試聽包 141 檔產出，交使用者試聽（reports/STEP2_TTS_LISTENING_PACK.md）"
+,
+        "2026-09-22 在 auto-reply 環境首次執行 tts-test：0 音檔（金鑰為佔位文字、網路擋 Azure），見 reports/TTS_TEST_2026-09-22.md",
+        "憑證格式檢查加入 provider 與 doctor"
+      ],
+      "tts_test_runs": [
+        {
+          "date": "2026-09-22",
+          "environment": "auto-reply (cloud)",
+          "command": "node dist/src/cli.js tts-test",
+          "exit_code": 1,
+          "files": 0,
+          "failures": 120,
+          "blockers": ["AZURE_SPEECH_KEY 非 ASCII（U+628A 開頭，佔位文字）", "egress proxy 403 on eastasia.tts.speech.microsoft.com:443"],
+          "report": "reports/TTS_TEST_2026-09-22.md"
+        },
+        {
+          "date": "2026-09-23",
+          "environment": "session_01U46ZPbvbnv9iH3v84NbsHp (cloud, key supplied in chat, to be regenerated)",
+          "command": "node dist/src/cli.js tts-test --out runtime/tts-test --lexicon none",
+          "exit_code": 0,
+          "files": 120,
+          "failures": 0,
+          "chars": 1644,
+          "report": "reports/STEP2_TTS_LISTENING_PACK.md"
+        }
       ]
     },
     {

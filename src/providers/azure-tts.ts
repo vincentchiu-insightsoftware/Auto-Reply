@@ -84,12 +84,28 @@ export function wavDurationMs(buf: Buffer): number | null {
   return null;
 }
 
+/**
+ * HTTP header 只接受 ISO-8859-1。金鑰或區域若含中文、全形字、空白或換行（常見於把佔位文字直接貼進環境變數），
+ * fetch 會丟出難懂的 ByteString TypeError。這裡先檢查並回傳可讀的說明；沒問題回 null。不回傳金鑰內容。
+ */
+export function validateAzureCredentials(key: string, region: string): string | null {
+  const firstBad = (v: string) => Array.from(v).findIndex((c) => c.codePointAt(0)! < 0x21 || c.codePointAt(0)! > 0x7e);
+  const hex = (v: string, i: number) => 'U+' + v.codePointAt(i)!.toString(16).toUpperCase().padStart(4, '0');
+  const bk = firstBad(key);
+  if (bk >= 0) return `AZURE_SPEECH_KEY 第 ${bk + 1} 個字元不是可列印 ASCII（${hex(key, bk)}），金鑰應為 32 位十六進位字串，目前像是佔位文字，請填入 Azure 入口網站的實際金鑰`;
+  const br = firstBad(region);
+  if (br >= 0) return `AZURE_SPEECH_REGION 第 ${br + 1} 個字元不是可列印 ASCII（${hex(region, br)}），應為區域代碼，例如 eastasia`;
+  return null;
+}
+
 export class AzureTtsProvider implements TtsProvider {
   readonly id = 'azure-tts';
   private u: ProviderUsage = { calls: 0, inputTokens: 0, outputTokens: 0, imageTokens: 0, ttsCharacters: 0, usd: 'UNKNOWN' };
   private price: number | null;
   constructor(private o: AzureTtsOptions) {
     if (!o.key || !o.region) throw new TtsError('Azure Speech 金鑰或區域未設定（AZURE_SPEECH_KEY / AZURE_SPEECH_REGION）');
+    const bad = validateAzureCredentials(o.key, o.region);
+    if (bad) throw new TtsError(bad);
     this.price = o.pricePerMillionChars ?? null;
     if (this.price !== null) this.u.usd = 0;
   }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyLexicon, buildSsml, wavDurationMs, AzureTtsProvider } from '../src/providers/azure-tts.js';
+import { applyLexicon, buildSsml, wavDurationMs, AzureTtsProvider, validateAzureCredentials } from '../src/providers/azure-tts.js';
 import { silentWav } from '../src/providers/mock-tts.js';
 import { TtsError } from '../src/types.js';
 
@@ -40,4 +40,15 @@ test('azure: 沒金鑰就明確失敗；HTTP 錯誤分流；成功回傳時長',
   assert.match(seenBody, /ph="ㄌㄜˋ ㄙㄜˋ"/);
   assert.equal(ok.usage().ttsCharacters, 5);
   assert.ok(typeof ok.usage().usd === 'number' && (ok.usage().usd as number) > 0);
+});
+
+test('azure: 金鑰或區域含非 ASCII（例如貼成中文佔位字）要在送出前就明確失敗，且訊息不含金鑰內容', () => {
+  assert.equal(validateAzureCredentials('0123456789abcdef0123456789abcdef', 'eastasia'), null);
+  const msg = validateAzureCredentials('把金鑰放這裡', 'eastasia');
+  assert.match(msg!, /AZURE_SPEECH_KEY 第 1 個字元/);
+  assert.match(msg!, /U\+628A/);
+  assert.doesNotMatch(msg!, /金鑰放這裡/);
+  assert.match(validateAzureCredentials('abc def', 'eastasia')!, /AZURE_SPEECH_KEY 第 4 個字元/);
+  assert.match(validateAzureCredentials('abc', '東亞')!, /AZURE_SPEECH_REGION 第 1 個字元/);
+  assert.throws(() => new AzureTtsProvider({ key: '把金鑰放這裡', region: 'eastasia', voice: 'v' }), (e: unknown) => e instanceof TtsError && /AZURE_SPEECH_KEY/.test((e as Error).message));
 });

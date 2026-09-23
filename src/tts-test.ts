@@ -22,7 +22,7 @@ export interface TtsTestOptions {
   rate: number;
 }
 
-export async function runTtsTest(o: TtsTestOptions): Promise<{ files: number; failures: number; chars: number }> {
+export async function runTtsTest(o: TtsTestOptions): Promise<{ files: number; failures: number; chars: number; credentialError: string | null }> {
   const set = JSON.parse(readFileSync(o.sentencesPath, 'utf8')) as SentenceSet;
   const lexicon: Lexicon | null = o.lexiconPath ? (JSON.parse(readFileSync(o.lexiconPath, 'utf8')) as Lexicon) : null;
   const sentences = o.limit ? set.sentences.slice(0, o.limit) : set.sentences;
@@ -30,8 +30,19 @@ export async function runTtsTest(o: TtsTestOptions): Promise<{ files: number; fa
   const lines: string[] = ['# 發音試聽清單', '', `產生時間：${new Date().toISOString()}`, `詞典：${o.lexiconPath ?? '（無）'}，條目 ${lexicon ? Object.keys(lexicon.entries).length : 0}`, '', '每一句聽一次，把唸錯的字記在「結果」欄。唸錯的詞加進 config/lexicon.zh-TW.json 後重跑，確認修正。', ''];
   let files = 0, failures = 0, chars = 0;
   const failLog: string[] = [];
+  let credentialError: string | null = null;
   for (const voice of o.voices) {
-    const tts = AzureTtsProvider.fromEnv(voice, { lexicon });
+    let tts: AzureTtsProvider;
+    try {
+      tts = AzureTtsProvider.fromEnv(voice, { lexicon });
+    } catch (e) {
+      // 憑證本身有問題，每個聲音都會一樣失敗，記一次就停，不逐句重複。
+      credentialError = (e as Error).message;
+      failures += sentences.length * (o.voices.length - o.voices.indexOf(voice));
+      failLog.push(`憑證檢查未通過，未送出任何請求：${credentialError}`);
+      process.stderr.write(`ERR 憑證檢查未通過：${credentialError}\n`);
+      break;
+    }
     lines.push(`## ${voice}`, '', '| 句 | 文字 | 要聽的字 | 檔案 | 結果 |', '| --- | --- | --- | --- | --- |');
     for (const s of sentences) {
       const file = `${voice}_${s.id}.wav`;
@@ -58,7 +69,7 @@ export async function runTtsTest(o: TtsTestOptions): Promise<{ files: number; fa
   }
   lines.push('## 失敗記錄', '', ...(failLog.length ? failLog.map((f) => `- ${f}`) : ['- 無']));
   writeFileSync(join(o.outDir, 'index.md'), lines.join('\n'));
-  return { files, failures, chars };
+  return { files, failures, chars, credentialError };
 }
 
 export function defaultVoices(): string[] {

@@ -53,3 +53,5 @@ node dist/src/cli.js tts-test --voices zh-TW-HsiaoChenNeural --limit 10   # 先�
 - **踩到的坑**：空的 `<prosody>` 標籤會回 400，已修（原速時不包 prosody）。zh-TW 的 sapi 音標是注音不是拼音，拼音格式一律 400，已更正文件與範例。
 - IPA 帶聲調符號也是 400，只有不帶聲調的 IPA 過，沒有實用價值，不採用。`<sub alias="樂色">垃圾</sub>` 換字法可用，作為注音之外的備援。
 - 試聽包實際產出見 reports/。
+
+先前紀錄（2026-09-22，另一個對話）：在「auto-reply」雲端環境第一次嘗試真實呼叫時沒有產生音檔，原因是環境變數裡貼的是中文佔位文字而不是金鑰，且該環境的網路政策擋住 `*.tts.speech.microsoft.com`。詳見 `reports/TTS_TEST_2026-09-22.md`。同日稍後在另一個對話以直接提供的金鑰完成上述實測。要在 auto-reply 環境自動跑，仍需修正該環境的金鑰值與網路放行。
