@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 遊戲直播主：問題、解法與參考案例</title>
+<style>
+  :root { --ink:#1f2328; --muted:#59636e; --line:#d9dee3; --soft:#f6f8fa; --accent:#0b5cad; --ok:#1a7f37; --warn:#9a6700; --bad:#b42318; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif; line-height:1.75; font-size:16px; }
+  main { max-width:920px; margin:0 auto; padding:40px 20px 80px; }
+  header { border-bottom:3px solid var(--ink); padding-bottom:16px; margin-bottom:28px; }
+  h1 { font-size:1.9rem; line-height:1.3; margin:0 0 8px; letter-spacing:.01em; }
+  .meta { color:var(--muted); font-size:.95rem; }
+  .lead { font-size:1.08rem; background:var(--soft); border-left:4px solid var(--accent); padding:14px 18px; margin:0 0 32px; }
+  h2 { font-size:1.35rem; margin:44px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  h2 small { color:var(--muted); font-weight:normal; font-size:.9rem; margin-left:8px; }
+  p { margin:10px 0; }
+  table { width:100%; border-collapse:collapse; margin:14px 0 8px; font-size:.95rem; }
+  th, td { border:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left; }
+  th { background:var(--soft); font-weight:600; white-space:nowrap; }
+  td:first-child { font-weight:600; white-space:nowrap; }
+  ul, ol { padding-left:1.4em; margin:10px 0; }
+  li { margin:6px 0; }
+  .tag { display:inline-block; font-size:.8rem; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); margin-left:6px; vertical-align:middle; }
+  .note { color:var(--muted); font-size:.92rem; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:720px) { .cols { grid-template-columns:1fr; } td:first-child { white-space:normal; } }
+  footer { margin-top:56px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:.9rem; }
+  a { color:var(--accent); }
+  @media print { main { padding:0; } h2 { break-after:avoid; } table { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>AI 遊戲直播主：會遇到的問題、解法，與參考案例</h1>
+  <div class="meta">2026 年 9 月 23 日 · 專案：Auto-Reply · 平台：Kick</div>
+</header>
+
+<p class="lead">方向已定。這份講四件事：做下去會遇到哪些問題、怎麼解、哪些解不了要接受，以及從最成功的 AI 直播主 Neuro-sama 能模仿什麼。最後兩節是費用出在哪，和主機怎麼架。</p>
+
+<h2>一、會遇到的問題與解法</h2>
+<table>
+  <tr><th style="width:18%">問題</th><th style="width:42%">狀況</th><th>解法</th></tr>
+  <tr><td>聲音情緒偏平</td><td>AI 聲音預設是中間值情緒。ElevenLabs 最新模型可在句中插標記觸發笑、叫、小聲、嘆氣，強度約真人七成。</td><td>錄聲音素材時故意錄進笑、叫、怒、平靜；程式在關鍵時刻插情緒標記；先花 22 美元實測。</td></tr>
+  <tr><td>中文唸錯字</td><td>複製聲音的服務沒有中文讀音指定功能。</td><td>程式送出前自動換同音字（垃圾→樂色），唸錯一個修一個。已完成。</td></tr>
+  <tr><td>回留言有延遲</td><td>留言送出到聲音回覆約 4 到 10 秒。</td><td>真人也常延後回，觀眾可接受。遊戲反應靠事前預看影片對時間點，不受影響。</td></tr>
+  <tr><td>Kick 規定</td><td>守則要求 AI 擬真內容在標題或畫面標示，禁止誤導觀眾的聲音複製。</td><td>畫面角落放小標示；聲音素材限本人或有書面同意的人。</td></tr>
+  <tr><td>無人值守出錯</td><td>服務斷線、費用失控、影片播完。</td><td>已設計：斷線自動安靜影片繼續、費用到上限自動停、影片播完自動收播。前幾場需有人監看。</td></tr>
+  <tr><td>AI 看不懂這款遊戲</td><td>尚未測試，可能講錯畫面內容。</td><td>給它遊戲規則資料；用 5 到 10 分鐘真影片實測，講對八成以上才繼續。</td></tr>
+  <tr><td>費用</td><td>每月固定約 30 到 120 美元，每小時直播約 3 到 6 美元（估算）。</td><td>程式已有上限機制。細節見第五節。</td></tr>
+</table>
+
+<h2>二、解不了、要接受的地方</h2>
+<ul>
+  <li><strong>情緒是安排的，不是真的。</strong> 影片預錄，反應事前排好。一句一句獨立，不會像真人漸漸激動；沒有真的意外、沒有即時鬥嘴。</li>
+  <li><strong>偶爾語調怪。</strong> 換字能修固定唸錯的字，修不了隨機的怪語調。情緒開越強，這種情況越多。</li>
+  <li><strong>第一版不記得觀眾。</strong> 每場從零開始，不認老觀眾、不接往事的梗。長期記憶是第二階段。</li>
+  <li><strong>被問是不是 AI。</strong> 程式略過不回、不說謊。但只要走「像真人」路線，被拆穿的反感就避不掉。見下一節。</li>
+</ul>
+
+<h2>三、對標 Neuro-sama：能模仿什麼</h2>
+<p><a href="https://en.wikipedia.org/wiki/Neuro-sama" target="_blank" rel="noopener">Neuro-sama</a> 是全由 AI 驅動的 VTuber，2022 年 12 月在 Twitch 開播，2026 年 1 月成為 Twitch 有史以來訂閱數第三高的頻道。它的聲音是明顯的機器合成音。調查顯示觀眾最喜歡的是它的反應，不是聲音。</p>
+<table>
+  <tr><th style="width:44%">它怎麼做</th><th>我們怎麼模仿</th></tr>
+  <tr><td>坦白自己是 AI，從不裝真人</td><td>定位為坦白的 AI VTuber。符合 Kick 規定，被拆穿的風險消失，觀眾對聲音的要求也降低。</td></tr>
+  <tr><td>反應快、講話有梗，靠強烈的個性設定</td><td>投資重心放在人設、口頭禪、台詞風格，而不是聲音像不像。</td></tr>
+  <tr><td>錯誤變成賣點，觀眾把它的失誤當情緒反應看</td><td>允許角色犯錯、自嘲，不追求字字完美。</td></tr>
+  <tr><td>固定的虛擬形象與節目化的固定環節</td><td>做一個固定 avatar，固定開場、收播、讀留言的橋段。</td></tr>
+  <tr><td>觀眾參與：選遊戲、出題考它</td><td>留言投票決定下一支影片；固定「觀眾提問」時間。</td></tr>
+  <tr><td>創作者 Vedal 常同台跟它對話</td><td>之後可加真人與 AI 同台的節目形式。</td></tr>
+  <tr><td>經營三年不斷改良</td><td>預期是長跑。第一版目標是穩定開播、有人願意留下來。</td></tr>
+</table>
+<p class="note">模仿不了的：它真的在玩遊戲，有真實的不可預測；我們是預錄影片。</p>
+
+<h2>四、新問題：第二、第三個主播的聲音怎麼來</h2>
+<p>現在只有一個真人聲音。之後要多個主播，有三條路：</p>
+<table>
+  <tr><th style="width:30%">方法</th><th>情緒表現</th><th>麻煩程度</th><th>說明</th></tr>
+  <tr><td>每個主播找一個真人錄 30 分鐘</td><td>最好</td><td>高</td><td>要找人、要錄、要書面同意、素材要有情緒。品質最穩。</td></tr>
+  <tr><td>沿用之前影片用的 AI 聲音</td><td>差</td><td>低</td><td>那些聲音的素材沒有大笑、大叫，複製出來也做不出來。另要確認原服務授權允不允許拿去別家複製。</td></tr>
+  <tr><td>ElevenLabs Voice Design：用文字描述直接生一個新聲音</td><td>待測</td><td>低</td><td>不用錄任何人，幾分鐘生一個，沒有授權問題。官方有 v3 版本的生成模型，理論上吃情緒標記，但中文自然度要測。</td></tr>
+</table>
+<p><strong>建議：</strong>第一版用真人聲音。測聲音時順便用 Voice Design 生一、兩個聲音一起跑同一套情緒測試。夠好，之後的主播就不用再錄真人；不夠，就確定每個主播都要真人錄。</p>
+
+<h2>五、費用出在哪</h2>
+<p>三個地方，都是按用量付費的雲端服務：</p>
+<table>
+  <tr><th>花在哪</th><th>付給誰</th><th style="width:26%">大概多少</th><th>為什麼要花</th><th>公司現有方案能不能抄</th></tr>
+  <tr><td>聲音</td><td>ElevenLabs</td><td>月費 22 美元（Creator）或 99 美元（Pro），含一定字數，超過加購</td><td>把台詞唸出來，每個字都算錢；每小時直播約 1.5 萬字</td><td>不能，要新開</td></tr>
+  <tr><td>大腦</td><td>Anthropic（Claude API）</td><td>無月費，用多少算多少，約每小時直播 2 到 4 美元</td><td>看畫面、讀留言、決定講什麼，每幾秒問一次</td><td>不能。公司付的 Claude 訂閱是給人用的聊天與 Claude Code；程式自動呼叫走的是 API，另外按量計費</td></tr>
+  <tr><td>主機</td><td>Railway 或公司私有雲</td><td>月費約 5 到 20 美元</td><td>24 小時開著，接 Kick 留言、推影片</td><td>能。公司已有 Railway 或私有雲，預估接近 0</td></tr>
+</table>
+<p>對公司真正新增的：聲音月費，加上每小時直播的 AI 呼叫費。每月播 40 小時約 200 到 300 美元。測試期第一個月約 30 美元。</p>
+
+<h2>六、主機要做什麼，公司私有雲能不能用</h2>
+<p>主機就是一台 24 小時開著的電腦，直播時做五件事：播預錄影片、接收 Kick 送進來的留言、去問 Claude 要講什麼、去叫 ElevenLabs 唸出來、把聲音混進影片推到 Kick。用 Railway 或公司私有雲都可以，條件如下：</p>
+<table>
+  <tr><th style="width:30%">需求</th><th style="width:34%">規格</th><th>為什麼</th></tr>
+  <tr><td>一台 Linux 主機或 Docker 容器，24 小時開著</td><td>2 到 4 核心、4 到 8 GB 記憶體、約 50 GB 硬碟</td><td>跑程式、放影片、推流編碼</td></tr>
+  <tr><td>對外連網</td><td>可連 ElevenLabs、Anthropic、Kick；上傳頻寬穩定 10 Mbps 以上</td><td>叫服務、推直播。很多公司內網會擋對外，要確認</td></tr>
+  <tr><td>一個從外面連得到的網址（HTTPS）</td><td>一個域名加憑證，或 IT 允許用隧道（例如 Cloudflare Tunnel）</td><td>Kick 的留言是它主動「送」進來的，沒有外部網址就收不到。這是私有雲最常卡的一點</td></tr>
+  <tr><td>能放金鑰的地方</td><td>環境變數或秘密管理</td><td>ElevenLabs、Claude、Kick 的金鑰不能寫在程式裡</td></tr>
+  <tr><td>掛掉自動重開</td><td>Docker restart 或 systemd</td><td>無人值守</td></tr>
+</table>
+<p>如果私有雲能對外連但不能被外面連，可以混合：用 Railway 放一個很小的中繼站只收 Kick 留言再轉進來，影片與主程式仍在私有雲。</p>
+<p><strong>要問 IT 的五個問題：</strong></p>
+<ol>
+  <li>能不能給一台 24 小時的 Linux 或 Docker？</li>
+  <li>它能不能連外部網站？</li>
+  <li>能不能有一個外部連得到的 HTTPS 網址，或允不允許隧道？</li>
+  <li>上傳頻寬多少？</li>
+  <li>金鑰怎麼放、誰負責部署？</li>
+</ol>
+
+<footer>
+  來源（2026-09-22 至 23 日讀取）：
+  <a href="https://elevenlabs.io/docs/best-practices/prompting/eleven-v3" target="_blank" rel="noopener">ElevenLabs v3 指南</a> ·
+  <a href="https://elevenlabs.io/docs/api-reference/text-to-voice/design" target="_blank" rel="noopener">ElevenLabs Voice Design</a> ·
+  <a href="https://elevenlabs.io/pricing" target="_blank" rel="noopener">ElevenLabs 價格</a> ·
+  <a href="https://kick.com/community-guidelines" target="_blank" rel="noopener">Kick 社群守則</a> ·
+  <a href="https://en.wikipedia.org/wiki/Neuro-sama" target="_blank" rel="noopener">Neuro-sama（Wikipedia）</a>
+</footer>
+</main>
+</body>
+</html>
