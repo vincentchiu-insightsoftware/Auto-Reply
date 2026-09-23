@@ -1,16 +1,17 @@
 /**
  * AzureTtsProvider：Azure AI Speech REST 介面，zh-TW neural voice，SSML 輸入。
  * - 本地詞典（lexicon）：把指定詞彙包成 <phoneme alphabet="sapi" ph="...">，讀音由我們決定，不靠模型猜。
+ *   zh-TW 的 sapi 音標是注音符號（例如 "ㄌㄜˋ ㄙㄜˋ"），音節以空格分開；拼音+數字是 zh-CN 的格式，zh-TW 會回 400（2026-09-23 實測）。
  * - 金鑰只從環境變數讀：AZURE_SPEECH_KEY、AZURE_SPEECH_REGION。沒有就明確失敗。
  * - 不重試。逾時由呼叫方 AbortSignal 決定。
- * 狀態：程式已寫，尚未以真實金鑰執行（NOT_TESTED）。
+ * 狀態：2026-09-23 以真實金鑰在 eastasia 執行過：合成、注音 phoneme、prosody rate 皆 200。
  */
 import { TtsError, type ProviderUsage, type TtsProvider, type TtsRequest, type TtsResult } from '../types.js';
 
 export interface Lexicon {
   version: number;
   locale: string;
-  /** 詞 → sapi 拼音，例如 "垃圾": "le 4 - se 4" */
+  /** 詞 → sapi 注音，例如 "垃圾": "ㄌㄜˋ ㄙㄜˋ" */
   entries: Record<string, string>;
 }
 
@@ -55,11 +56,12 @@ export function applyLexicon(text: string, lexicon: Lexicon | null | undefined):
 
 export function buildSsml(text: string, opts: { voice: string; locale: string; rate: number; lexicon?: Lexicon | null }): string {
   const ratePct = Math.round((opts.rate - 1) * 100);
-  const rateAttr = ratePct === 0 ? '' : ` rate="${ratePct > 0 ? '+' : ''}${ratePct}%"`;
-  const body = applyLexicon(text, opts.lexicon);
+  const inner = applyLexicon(text, opts.lexicon);
+  // 空的 <prosody> 會被 Azure 以 400 拒絕（2026-09-23 實測），原速時不包
+  const body = ratePct === 0 ? inner : `<prosody rate="${ratePct > 0 ? '+' : ''}${ratePct}%">${inner}</prosody>`;
   return (
     `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${opts.locale}">` +
-    `<voice name="${escapeXml(opts.voice)}"><prosody${rateAttr}>${body}</prosody></voice></speak>`
+    `<voice name="${escapeXml(opts.voice)}">${body}</voice></speak>`
   );
 }
 

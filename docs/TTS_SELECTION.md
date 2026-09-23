@@ -9,7 +9,7 @@
 | 能力 | Azure AI Speech | ElevenLabs |
 | --- | --- | --- |
 | 官方台灣中文聲音 | 有，zh-TW 三個：HsiaoChen（女）、HsiaoYu（女）、YunJhe（男） | 只標 Chinese，不分繁簡與台灣口音 |
-| 逐詞指定讀音 | 有。SSML `<phoneme alphabet="sapi" ph="le 4 - se 4">垃圾</phoneme>`，拼音加聲調，官方列出 zh-TW 支援 sapi 音標集 | 音標標籤只支援 `eleven_flash_v2`，官方文件沒有中文音標支援 |
+| 逐詞指定讀音 | 有。zh-TW 用**注音符號**：`<phoneme alphabet="sapi" ph="ㄌㄜˋ ㄙㄜˋ">垃圾</phoneme>`，音節用空格分開（2026-09-23 實測 200；拼音加數字是 zh-CN 格式，zh-TW 會回 400） | 音標標籤只支援 `eleven_flash_v2`，官方文件沒有中文音標支援 |
 | 整批詞典 | 有。自訂 lexicon 檔（100 KB 內），一次修多個詞 | 有 pronunciation dictionary，但中文只能用 alias 換字，不能指定讀音 |
 | 唸錯時的修法 | 加一條詞典，永久修正 | 換字、加標點、換模型，碰運氣 |
 | 自然度 | 專業主播風，穩定但比較「正」 | 情緒與口語感較強 |
@@ -42,9 +42,14 @@ node dist/src/cli.js tts-test --voices zh-TW-HsiaoChenNeural --limit 10   # 先�
 ```
 
 4. 打開 `runtime/tts-test/index.md`，逐句聽，把唸錯的字記在「結果」欄。
-5. 唸錯的詞加進 `config/lexicon.zh-TW.json`，格式見 `config/lexicon.zh-TW.example.json`。重跑同一命令，確認修正。
+5. 唸錯的詞加進 `config/lexicon.zh-TW.json`，用注音寫讀音，格式見 `config/lexicon.zh-TW.example.json`。重跑同一命令，確認修正。
 6. 同時決定「小遊」用哪個聲音。
 
-## 狀態
+## 狀態（2026-09-23 實測）
 
-Azure 接口程式已寫好並有單元測試（SSML 組裝、詞典包裝、WAV 時長、HTTP 錯誤分流），但**尚未用真實金鑰呼叫過**，標 NOT_TESTED。zh-TW 的 sapi 音標格式依官方文件的 zh-CN 範例推定相同，首次真實呼叫時要確認 400 錯誤是否出現。
+以使用者的 Azure Speech 資源（eastasia，Free F0）實際呼叫：
+- 三個 zh-TW 聲音都在 voices/list 裡，狀態 GA。
+- 純文字合成 200；注音 phoneme 200；`prosody rate` 200。
+- **踩到的坑**：空的 `<prosody>` 標籤會回 400，已修（原速時不包 prosody）。zh-TW 的 sapi 音標是注音不是拼音，拼音格式一律 400，已更正文件與範例。
+- IPA 帶聲調符號也是 400，只有不帶聲調的 IPA 過，沒有實用價值，不採用。`<sub alias="樂色">垃圾</sub>` 換字法可用，作為注音之外的備援。
+- 試聽包實際產出見 reports/。
