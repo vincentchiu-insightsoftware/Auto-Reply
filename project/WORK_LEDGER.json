@@ -58,24 +58,24 @@
       "name": "真實內容，輸出測試影片",
       "state": "WAITING_FOR_USER_INPUT",
       "needs_from_user": [
-        "試聽結果：選聲音、列出唸錯的字",
+        "ElevenLabs 帳號（Starter 或 Creator）、上傳本人錄音完成複製、提供 voice_id",
+        "ELEVENLABS_API_KEY（對話交付後重新產生，或設在雲端環境）",
         "遊戲影片檔",
-        "Claude API 金鑰放置方式（環境變數名稱）",
-        "auto-reply 雲端環境的 AZURE_SPEECH_KEY 目前是中文佔位文字，需換成真金鑰；該環境網路政策也需放行 *.tts.speech.microsoft.com",
+        "Claude API 金鑰放置方式",
         "費用上限"
       ],
       "decisions": {
         "persona": "小遊（fixtures/scenario-a/persona.json）",
-        "tts_provider": "Azure AI Speech zh-TW（docs/TTS_SELECTION.md）",
-        "tts_voice": "待試聽決定"
+        "tts_provider": "ElevenLabs 複製使用者本人聲音（Azure 三聲音試聽判定太 AI，降為備援）；發音修正用替字表",
+        "tts_voice": "待使用者在 ElevenLabs 複製後提供 voice_id"
       },
       "progress": [
         "Azure TTS 接口實測通過（eastasia，Free F0）",
         "zh-TW phoneme 格式確認為注音符號",
-        "發音試聽包 141 檔產出，交使用者試聽（reports/STEP2_TTS_LISTENING_PACK.md）"
-,
+        "發音試聽包 141 檔產出，交使用者試聽（reports/STEP2_TTS_LISTENING_PACK.md）",
         "2026-09-22 在 auto-reply 環境首次執行 tts-test：0 音檔（金鑰為佔位文字、網路擋 Azure），見 reports/TTS_TEST_2026-09-22.md",
-        "憑證格式檢查加入 provider 與 doctor"
+        "憑證格式檢查加入 provider 與 doctor",
+        "2026-09-23 使用者判定 Azure 三聲音太 AI；新增 ElevenLabs provider、替字表、多供應商試聽包（45 tests pass）"
       ],
       "tts_test_runs": [
         {
@@ -85,7 +85,10 @@
           "exit_code": 1,
           "files": 0,
           "failures": 120,
-          "blockers": ["AZURE_SPEECH_KEY 非 ASCII（U+628A 開頭，佔位文字）", "egress proxy 403 on eastasia.tts.speech.microsoft.com:443"],
+          "blockers": [
+            "AZURE_SPEECH_KEY 非 ASCII（U+628A 開頭，佔位文字）",
+            "egress proxy 403 on eastasia.tts.speech.microsoft.com:443"
+          ],
           "report": "reports/TTS_TEST_2026-09-22.md"
         },
         {
@@ -121,7 +124,7 @@
     "video_frames": "NOT_TESTED",
     "kick_chat": "NOT_TESTED",
     "model": "NOT_TESTED",
-    "tts": "TESTED (synthesis + bopomofo phoneme, 141 files); pronunciation quality awaiting human listening",
+    "tts": "Azure TESTED but rejected on naturalness; ElevenLabs adapter NOT_TESTED (awaiting key + voice_id)",
     "stream_push": "NOT_TESTED",
     "unattended_2h": "NOT_TESTED",
     "mock_pipeline": "TESTED"

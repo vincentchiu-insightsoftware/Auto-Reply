@@ -10,7 +10,7 @@ import { generateScenario, scenarioDigest, scenarioExists } from './fixtures/gen
 import { runReplay } from './replay.js';
 import { buildReport, readEvents, renderReport } from './report.js';
 import { attachStdinControl } from './control/stdin.js';
-import { runTtsTest, defaultVoices } from './tts-test.js';
+import { runTtsTest, defaultVariants } from './tts-test.js';
 import { validateAzureCredentials } from './providers/azure-tts.js';
 
 
@@ -110,23 +110,38 @@ async function main(argv: string[]): Promise<number> {
       return checks.some((c) => c.status === 'FAIL') ? 1 : 0; // MISSING 與 SKIPPED 不算失敗，但也不算通過
     }
     case 'tts-test': {
-      if (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION) {
+      const provider = (arg(args, '--provider', 'azure') as 'azure' | 'elevenlabs');
+      if (provider !== 'azure' && provider !== 'elevenlabs') {
+        console.error('--provider 只接受 azure 或 elevenlabs');
+        return 2;
+      }
+      if (provider === 'azure' && (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION)) {
         console.error('需要環境變數 AZURE_SPEECH_KEY 與 AZURE_SPEECH_REGION。沒有金鑰就不產生任何音檔（不做假結果）。');
         return 2;
       }
-      const voicesArg = arg(args, '--voices', null);
+      const voiceId = arg(args, '--voice-id', null);
+      if (provider === 'elevenlabs' && (!process.env.ELEVENLABS_API_KEY || !voiceId)) {
+        console.error('elevenlabs 需要環境變數 ELEVENLABS_API_KEY 與 --voice-id <你複製的聲音 ID>。');
+        return 2;
+      }
+      const variantsArg = arg(args, '--voices', null) ?? arg(args, '--models', null);
       const limit = arg(args, '--limit', null);
-      const lex = arg(args, '--lexicon', 'config/lexicon.zh-TW.json');
+      const lex = arg(args, '--lexicon', provider === 'azure' ? 'config/lexicon.zh-TW.json' : 'none');
+      const hom = arg(args, '--homophones', 'config/homophones.zh-TW.json');
+      const outDir = resolve(arg(args, '--out', `runtime/tts-test-${provider}`)!);
       const r = await runTtsTest({
+        provider,
         sentencesPath: resolve(arg(args, '--sentences', 'fixtures/pronunciation/sentences.json')!),
-        outDir: resolve(arg(args, '--out', 'runtime/tts-test')!),
-        voices: voicesArg ? voicesArg.split(',') : defaultVoices(),
+        outDir,
+        variants: variantsArg ? variantsArg.split(',') : defaultVariants(provider),
+        voiceId,
         lexiconPath: lex && lex !== 'none' ? resolve(lex) : null,
+        homophonesPath: hom && hom !== 'none' ? resolve(hom) : null,
         limit: limit ? Number(limit) : null,
-        timeoutMs: Number(arg(args, '--timeout-ms', '15000')),
+        timeoutMs: Number(arg(args, '--timeout-ms', '30000')),
         rate: Number(arg(args, '--rate', '1')),
       });
-      console.log(JSON.stringify({ ...r, indexFile: resolve(arg(args, '--out', 'runtime/tts-test')!, 'index.md') }, null, 2));
+      console.log(JSON.stringify(r, null, 2));
       return r.failures > 0 ? 1 : 0;
     }
     default:
@@ -135,7 +150,8 @@ async function main(argv: string[]): Promise<number> {
       console.error('  replay --scenario DIR --config FILE --out FILE.jsonl [--inject-estop N] [--realtime] [--limit-minutes N] [--report-json FILE]');
       console.error('  report FILE.jsonl [--json] [--transcript N]');
       console.error('  doctor [--config FILE]');
-      console.error('  tts-test [--voices a,b] [--limit N] [--lexicon FILE|none] [--out DIR]   需要 AZURE_SPEECH_KEY / AZURE_SPEECH_REGION');
+      console.error('  tts-test --provider azure [--voices a,b] [--lexicon FILE|none] [--homophones FILE|none] [--limit N] [--out DIR]   需要 AZURE_SPEECH_KEY / AZURE_SPEECH_REGION');
+      console.error('  tts-test --provider elevenlabs --voice-id ID [--models a,b] [--homophones FILE|none] [--limit N] [--out DIR]   需要 ELEVENLABS_API_KEY');
       return 2;
   }
 }

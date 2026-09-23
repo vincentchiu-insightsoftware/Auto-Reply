@@ -1,5 +1,7 @@
 # 語音服務選擇
 
+> **2026-09-23 更新：** 使用者試聽 Azure 三個 zh-TW 聲音後判定「太 AI、完全不行」。改走 **ElevenLabs 複製使用者自己的聲音**，發音修正改用程式內的**替字表**（送出前把易錯詞換成同音字，對任何供應商有效）。Azure 降為備援。以下第一版比較保留作紀錄。
+
 日期：2026-09-22。首要條件：講繁體中文時用字發音不能跑掉。其次才是自然度與價格。
 
 ## 結論
@@ -55,3 +57,33 @@ node dist/src/cli.js tts-test --voices zh-TW-HsiaoChenNeural --limit 10   # 先�
 - 試聽包實際產出見 reports/。
 
 先前紀錄（2026-09-22，另一個對話）：在「auto-reply」雲端環境第一次嘗試真實呼叫時沒有產生音檔，原因是環境變數裡貼的是中文佔位文字而不是金鑰，且該環境的網路政策擋住 `*.tts.speech.microsoft.com`。詳見 `reports/TTS_TEST_2026-09-22.md`。同日稍後在另一個對話以直接提供的金鑰完成上述實測。要在 auto-reply 環境自動跑，仍需修正該環境的金鑰值與網路放行。
+
+
+## 2026-09-23 改版：ElevenLabs 複製聲音 + 替字表
+
+### 為什麼改
+- 自然度是觀眾第一個感受到的東西；Azure 內建聲音在盲聽被判定不可用。
+- 使用者有自己的聲音素材，且是本人聲音，合規。
+- 發音問題不再依賴廠商音標：程式在送出前把易錯詞換成同音字（`config/homophones.zh-TW.json`，例如 垃圾→樂色）。唸錯一個加一條。ElevenLabs 剩下的隨機語調怪異無法用替字修，要靠模型選擇與 voice_settings 調整。
+
+### 方案（elevenlabs.io/pricing，2026-09-23 讀取）
+| 方案 | 月費 | 每月字元 | 複製聲音 |
+| --- | --- | --- | --- |
+| Free | $0 | 10,000 | 無，且無商用授權 |
+| Starter | $6 | 30,000 | Instant Voice Cloning（1 至 2 分鐘素材） |
+| Creator | $22 | 121,000 | Professional Voice Cloning（30 分鐘以上乾淨素材，效果好很多） |
+| Pro | $99 | 600,000 | 加 44.1kHz PCM 輸出 |
+
+直播用量估算：每小時約 1.5 萬字元，Creator 約可播 8 小時／月，Pro 約 40 小時／月。正式開播前要再評估方案。
+
+### 模型（docs 2026-09-23）
+- `eleven_multilingual_v2`：最穩定、最常用，中文可。
+- `eleven_v3`：情緒表現最強，較新。
+- `eleven_flash_v2_5`：延遲最低、便宜一半，品質略低。
+試聽包會用同一個複製聲音跑三個模型讓使用者比較。
+
+### 程式
+- `src/providers/elevenlabs-tts.ts`：POST /v1/text-to-speech/{voice_id}，預設 pcm_24000 自包 WAV（精確時長）；方案不允許 PCM 時退回 mp3 並以位元率估時長。金鑰只讀 `ELEVENLABS_API_KEY`。
+- `src/text/homophones.ts`：替字表，Azure 與 ElevenLabs 共用。
+- `arb tts-test --provider elevenlabs --voice-id <ID>`：同一份 40 句 × 三個模型，輸出 index.html 試聽頁。
+- 狀態：單元測試通過；真實呼叫待使用者提供金鑰與 voice_id（NOT_TESTED）。

@@ -7,6 +7,7 @@
  * 狀態：2026-09-23 以真實金鑰在 eastasia 執行過：合成、注音 phoneme、prosody rate 皆 200。
  */
 import { TtsError, type ProviderUsage, type TtsProvider, type TtsRequest, type TtsResult } from '../types.js';
+import { applyHomophones, type Homophones } from '../text/homophones.js';
 
 export interface Lexicon {
   version: number;
@@ -21,6 +22,8 @@ export interface AzureTtsOptions {
   voice: string; // 例如 zh-TW-HsiaoChenNeural
   locale?: string; // 預設 zh-TW
   lexicon?: Lexicon | null;
+  /** 替字表：先換同音字再送（任何供應商通用），與注音詞典可並用 */
+  homophones?: Homophones | null;
   /** 每百萬字元美元；未知給 null → usage.usd = 'UNKNOWN' */
   pricePerMillionChars?: number | null;
   /** 測試可注入 fetch */
@@ -115,9 +118,12 @@ export class AzureTtsProvider implements TtsProvider {
   usage(): ProviderUsage {
     return { ...this.u };
   }
+  lastHomophoneHits: string[] = [];
   async synthesize(req: TtsRequest, signal: AbortSignal): Promise<TtsResult> {
     const voice = req.voiceId ?? this.o.voice;
-    const ssml = buildSsml(req.text, { voice, locale: this.o.locale ?? 'zh-TW', rate: req.rate ?? 1, lexicon: this.o.lexicon ?? null });
+    const sub = applyHomophones(req.text, this.o.homophones);
+    this.lastHomophoneHits = sub.hits;
+    const ssml = buildSsml(sub.text, { voice, locale: this.o.locale ?? 'zh-TW', rate: req.rate ?? 1, lexicon: this.o.lexicon ?? null });
     const url = `https://${this.o.region}.tts.speech.microsoft.com/cognitiveservices/v1`;
     const f = this.o.fetchImpl ?? fetch;
     this.u.calls++;
