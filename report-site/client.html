@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 直播主：運作方式與為什麼標榜 AI</title>
+<style>
+  :root { --ink:#1f2328; --muted:#59636e; --line:#d9dee3; --soft:#f6f8fa; --accent:#0b5cad; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif; line-height:1.8; font-size:16px; }
+  main { max-width:860px; margin:0 auto; padding:40px 20px 80px; }
+  header { border-bottom:3px solid var(--ink); padding-bottom:16px; margin-bottom:28px; }
+  h1 { font-size:1.9rem; line-height:1.3; margin:0 0 8px; }
+  .meta { color:var(--muted); font-size:.95rem; }
+  .lead { font-size:1.1rem; background:var(--soft); border-left:4px solid var(--accent); padding:14px 18px; margin:0 0 32px; }
+  h2 { font-size:1.35rem; margin:44px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  p { margin:10px 0; }
+  table { width:100%; border-collapse:collapse; margin:14px 0 8px; font-size:.95rem; }
+  th, td { border:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left; }
+  th { background:var(--soft); font-weight:600; }
+  td:first-child { font-weight:600; white-space:nowrap; }
+  ul, ol { padding-left:1.4em; margin:10px 0; }
+  li { margin:6px 0; }
+  .flow { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:16px 0 6px; }
+  .flow div { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:12px 10px; text-align:center; font-size:.95rem; }
+  .flow b { display:block; font-size:1.05rem; margin-bottom:4px; }
+  .num { font-size:1.6rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:16px 0; }
+  .stats div { border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .stats small { color:var(--muted); }
+  .note { color:var(--muted); font-size:.92rem; }
+  @media (max-width:720px) { .flow, .stats { grid-template-columns:1fr; } td:first-child { white-space:normal; } }
+  footer { margin-top:56px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:.9rem; }
+  a { color:var(--accent); }
+  @media print { main { padding:0; } h2 { break-after:avoid; } table, .stats, .flow { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>AI 直播主：它怎麼運作，以及為什麼我們直接標榜「AI」</h1>
+  <div class="meta">2026 年 9 月 27 日 · 平台：Kick</div>
+</header>
+
+<p class="lead">這是一個由 AI 主持的遊戲直播頻道。它會看遊戲畫面講評、讀觀眾留言並即時回覆，全程不需要真人在場。我們決定<strong>公開標榜它是 AI</strong>，而不是讓它假裝成真人。這份說明講清楚它怎麼運作、為什麼這樣決定、以及支持這個決定的數據。</p>
+
+<h2>一、它怎麼運作</h2>
+<div class="flow">
+  <div><b>1</b>播放預錄好的遊戲影片</div>
+  <div><b>2</b>AI 看畫面、讀觀眾留言</div>
+  <div><b>3</b>依角色個性決定現在要不要講、講什麼</div>
+  <div><b>4</b>用 AI 聲音講出來</div>
+  <div><b>5</b>混進影片，推到 Kick 直播</div>
+</div>
+<p>角色有固定的名字、個性、口頭禪與說話風格。有內容才講，沒事就安靜，不會硬塞台詞。觀眾留言送出到聲音回覆約 4 到 10 秒，和真人主播看到留言再回的節奏接近。遊戲畫面的反應因為影片事先看過，可以排在正確的秒數上，不會慢。</p>
+<p>整套流程有自動守門：AI 或聲音服務斷線時角色安靜、影片繼續播；費用到上限自動停；影片播完自動收播；觀眾試圖引導 AI 講不該講的話會被擋下。</p>
+
+<h2>二、為什麼不做「仿真人」，而是直接標榜 AI</h2>
+<p>原本的期待是讓 AI 模仿真人主播，讓觀眾感覺不出差別。我們做了實際測試後，決定不走這條路。三個原因：</p>
+
+<table>
+  <tr><th style="width:22%">原因</th><th>說明</th></tr>
+  <tr><td>聲音技術到不了</td><td>目前的 AI 聲音在音色上可以很像人，但講話的抑揚頓挫、呼吸停頓、突然的情緒爆發（大笑、大叫、怒罵）做不出真人的程度。我們實測過三個台灣中文的商用 AI 聲音，聽起來仍然「一聽就是 AI」。這不是選錯廠商，是整個產業目前的共同上限，數據見第三節。</td></tr>
+  <tr><td>平台規定</td><td>Kick 的社群守則明文要求：使用 AI 生成擬真內容的直播，必須在標題或畫面上向觀眾揭露；並禁止會誤導觀眾的聲音複製。假裝真人等於違規，帳號可能被停。</td></tr>
+  <tr><td>被拆穿的代價</td><td>仿真人一旦被觀眾發現（唸錯字、情緒切換生硬、答非所問），反感會比一開始就坦白大很多。坦白的 AI 角色犯錯，觀眾反而當成它的特色。</td></tr>
+</table>
+
+<h2>三、數據支持</h2>
+
+<p><strong>AI 聲音與真人的差距，是量出來的。</strong>我們把 AI 合成的語音和真人錄音放在同一套工具裡比較：</p>
+<table>
+  <tr><th>量測項目</th><th>AI 合成語音</th><th>真人</th><th>差距</th></tr>
+  <tr><td>每 10 秒的停頓次數</td><td>2.1 次</td><td>6.8 次</td><td>真人多 3.2 倍</td></tr>
+  <tr><td>句與句之間的音高變化</td><td>0.47 半音</td><td>1.71 半音</td><td>真人多 3.6 倍</td></tr>
+  <tr><td>音色（中位音高）</td><td>199.9 Hz</td><td>200.3 Hz</td><td>幾乎相同</td></tr>
+</table>
+<p class="note">結論很明確：AI 聲音「像不像這個人」已經沒問題，差的是「講話像不像真人在講話」。這一段目前補不起來。</p>
+
+<p><strong>公開標榜 AI，一樣可以做到很大。</strong>全球最成功的 AI 直播主 <a href="https://en.wikipedia.org/wiki/Neuro-sama" target="_blank" rel="noopener">Neuro-sama</a>，從第一天就公開是 AI，聲音是明顯的機器合成音（用微軟的合成語音調高音調，語氣平淡，激動時靠字幕全大寫來表現）：</p>
+<div class="stats">
+  <div><div class="num">2,000+</div><small>開播 10 天內平均同時觀看人數，高峰超過 4,000</small></div>
+  <div><div class="num">5,700</div><small>開播半年後（2023 年 6 月）的平均同時觀看人數</small></div>
+  <div><div class="num">第 3 名</div><small>2026 年 1 月，成為 Twitch 有史以來訂閱數第三高的頻道</small></div>
+</div>
+<p>調查顯示，觀眾喜歡它的第一原因是「它的反應」，也就是講話有梗、回留言快、個性鮮明，而不是聲音像不像人。它的失誤和怪話，觀眾也當成情緒反應在看。</p>
+
+<h2>四、這代表我們會怎麼做</h2>
+<ul>
+  <li><strong>畫面上放 AI 標示</strong>，符合 Kick 規定，一開始就把期待設對。</li>
+  <li><strong>投資順序：個性和反應 &gt; 聲音自然度 &gt; 畫面。</strong>這是 Neuro-sama 證明有效的順序。</li>
+  <li><strong>聲音仍然用最好的：</strong>用真人錄音複製出專屬聲音，並在關鍵時刻加入笑、叫、嘆氣等情緒標記。做不到真人的程度，但會是目前技術能給的最好版本。</li>
+  <li><strong>允許角色有 AI 的個性</strong>：可以自嘲、可以犯錯、被問是不是 AI 時不否認。這些在坦白的定位下都是特色，不是缺點。</li>
+</ul>
+
+<footer>
+  來源（2026 年 9 月讀取）：
+  <a href="https://kick.com/community-guidelines" target="_blank" rel="noopener">Kick 社群守則</a> ·
+  <a href="https://en.wikipedia.org/wiki/Neuro-sama" target="_blank" rel="noopener">Neuro-sama（Wikipedia）</a> ·
+  <a href="https://virtualyoutuber.fandom.com/wiki/Neuro-sama" target="_blank" rel="noopener">Virtual YouTuber Wiki</a> ·
+  <a href="https://elevenlabs.io/docs/best-practices/prompting/eleven-v3" target="_blank" rel="noopener">ElevenLabs 官方文件（情緒標記與限制）</a> ·
+  AI 與真人語音的量測數據來自本公司內部測試。
+</footer>
+</main>
+</body>
+</html>
