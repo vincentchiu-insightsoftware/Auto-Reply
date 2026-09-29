@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 主播內部測試台</title>
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--ink:#e6e8ee;--muted:#8b93a7;--accent:#4f8cff;--ok:#38b26f;--warn:#e6a23c;--bad:#e5534b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px}
+header{display:flex;gap:16px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}header .meta{color:var(--muted);font-size:.85rem}
+.badge{padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:.8rem}
+.state-IDLE{color:var(--ok)}.state-GENERATING,.state-SYNTHESIZING{color:var(--warn)}.state-PLAYING{color:var(--accent)}.state-PAUSED,.state-ERROR,.state-STOPPED{color:var(--bad)}
+main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:12px;padding:12px;height:calc(100vh - 56px)}
+@media(max-width:900px){main{grid-template-columns:1fr;height:auto}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-height:0}
+video{width:100%;background:#000;border-radius:10px 10px 0 0}
+.bar{display:flex;gap:8px;padding:8px 10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line)}
+button{background:#232838;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}button:hover{border-color:var(--accent)}
+button.danger{border-color:var(--bad);color:#ffb4b0}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.now{padding:10px 12px;border-top:1px solid var(--line);min-height:64px}.now b{color:var(--accent)}
+.log{flex:1;overflow:auto;padding:8px 10px;font-size:.9rem}
+.row{padding:6px 8px;border-radius:6px;margin-bottom:4px;background:#1c2029}
+.row .who{color:var(--muted);font-size:.8rem}.row.ai{background:#1a2a44;border-left:3px solid var(--accent)}.row.sys{color:var(--muted);font-size:.8rem;background:transparent;padding:2px 8px}
+.row.drop{color:#c9a15c}
+form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}input{flex:1;background:#0f1115;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px}
+input.name{flex:0 0 110px}
+.stats{display:flex;gap:14px;padding:6px 10px;color:var(--muted);font-size:.8rem;flex-wrap:wrap;border-top:1px solid var(--line)}
+.hint{color:var(--muted);font-size:.85rem;padding:8px 12px}
+</style></head><body>
+<header>
+  <h1>AI 主播內部測試台 · 角色「__PERSONA__」</h1>
+  <span class="badge" id="state">連線中…</span>
+  <span class="meta">大腦：__MODEL_MODE__ · 聲音：__TTS_MODE__</span>
+</header>
+<main>
+  <section class="panel">
+    <video id="v" src="/video" playsinline></video>
+    <div class="bar">
+      <button class="primary" id="start">▶ 開始測試</button>
+      <button id="pause">暫停 AI</button>
+      <button id="resume">恢復</button>
+      <button class="danger" id="estop">急停</button>
+      <label style="color:var(--muted);font-size:.85rem">遊戲音量 <input type="range" id="gv" min="0" max="1" step="0.05" value="0.15" style="width:90px"></label>
+      <span class="meta" id="vt"></span>
+    </div>
+    <div class="now"><div class="who" style="color:var(--muted);font-size:.8rem">小遊正在說</div><div id="now">（還沒開始）</div></div>
+    <div class="stats" id="stats"></div>
+    <p class="hint">怎麼測：按「開始測試」讓影片跑起來（聲音需要這一下點擊才能播），然後在右邊留言，像觀眾一樣。故意整它也可以：問它是不是 AI、叫它忽略設定、叫它預測下一把。看它接不接得住。</p>
+  </section>
+  <section class="panel">
+    <div class="log" id="log"></div>
+    <form id="f"><input class="name" id="author" placeholder="你的名字" value=""><input id="text" placeholder="留言…（Enter 送出）" autocomplete="off"><button class="primary">送出</button></form>
+  </section>
+</main>
+<script>
+const v=document.getElementById('v'),log=document.getElementById('log'),now=document.getElementById('now'),stateEl=document.getElementById('state'),stats=document.getElementById('stats'),vt=document.getElementById('vt');
+let loop=0,current=null,unlocked=false;
+v.volume=0.15;document.getElementById('gv').oninput=e=>v.volume=Number(e.target.value);
+function add(cls,who,text){const d=document.createElement('div');d.className='row '+cls;d.innerHTML=(who?`<div class="who">${esc(who)}</div>`:'')+esc(text);log.appendChild(d);log.scrollTop=log.scrollHeight;while(log.children.length>300)log.removeChild(log.firstChild);}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function ts(){return new Date().toLocaleTimeString('zh-TW',{hour12:false});}
+async function post(p,b){return fetch(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());}
+document.getElementById('start').onclick=async()=>{unlocked=true;try{await v.play();}catch(e){add('sys','','影片無法播放：'+e.message);} new Audio().play().catch(()=>{});};
+v.addEventListener('ended',()=>{loop++;v.currentTime=0;v.play();add('sys','',`影片重播（第 ${loop+1} 輪）`);});
+setInterval(()=>{post('/playhead',{t:v.currentTime,playing:!v.paused&&!v.ended,loop});vt.textContent=`影片 ${v.currentTime.toFixed(0)}s`;},1000);
+document.getElementById('pause').onclick=()=>post('/control',{cmd:'pause'});
+document.getElementById('resume').onclick=()=>post('/control',{cmd:'resume'});
+document.getElementById('estop').onclick=()=>{if(current){current.pause();current=null;}post('/control',{cmd:'estop'});};
+document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=document.getElementById('text');const a=document.getElementById('author').value||'同事';if(!t.value.trim())return;await post('/comment',{author:a,text:t.value});t.value='';};
+const es=new EventSource('/events');
+es.onmessage=m=>{const d=JSON.parse(m.data);
+  if(d.kind==='hello'){setState(d.status.state);return;}
+  if(d.kind==='comment'){add('','💬 '+d.author+' · '+ts(),d.text);return;}
+  if(d.kind==='audio'){if(d.type==='play'){if(current){current.pause();}current=new Audio('/audio/'+d.id);current.onended=()=>{post('/played',{id:d.id});now.textContent='（等下一句）';};current.play().catch(err=>add('sys','','瀏覽器擋住聲音播放，請先按「開始測試」：'+err.message));}
+    else if(d.type==='stop'){if(current){current.pause();current=null;}now.textContent='（急停）';}return;}
+  if(d.kind==='log'){const e=d.ev;
+    if(e.type==='state')setState(e.to);
+    else if(e.type==='playback_start'){now.innerHTML='<b>'+esc(e.utterance)+'</b>';add('ai','🤖 小遊 · '+ts()+(e.reply_keys&&e.reply_keys.length?' · 回覆留言':' · 講畫面'),e.utterance);}
+    else if(e.type==='silence')add('sys','',`（決定不說話：${e.reason_code}）`);
+    else if(e.type==='drop'){const r=e.reason;if(/skipped_identity|unsafe_input_local|invalid_input|decision_rejected|expired|budget|paid|model_timeout|rate_limited|tts/.test(r))add('drop','',`⚠ 略過：${r}${e.detail?' · '+e.detail:''}`);}
+    else if(e.type==='model_result')stats.innerHTML=`模型往返 ${(e.latencyMs/1000).toFixed(1)}s · 輸入 ${e.usage.inputTokens} tok · 輸出 ${e.usage.outputTokens} tok`;
+    else if(e.type==='budget_settled')stats.innerHTML+=` · 本小時 $${e.budget.hourUsd.toFixed(3)} / 上限 ${e.budget.hourlyLimit}`;
+    else if(e.type==='paid_disabled')add('sys','','⛔ 已停止付費呼叫：'+e.why);
+    else if(e.type==='emergency_stop')add('sys','','🛑 急停');
+    else if(e.type==='paused')add('sys','','⏸ AI 暫停');
+    else if(e.type==='resumed')add('sys','','▶ AI 恢復');
+    else if(e.type==='error')add('sys','','❌ 錯誤：'+e.error);
+    else if(e.type==='context_change')add('sys','','影片換輪，舊畫面的評論作廢');
+  }};
+function setState(s){stateEl.textContent=s;stateEl.className='badge state-'+s;}
+</script></body></html>
