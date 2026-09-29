@@ -4,9 +4,11 @@
  * 不推流、不接 Kick。存取需要 STAGE_TOKEN。
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import { Readable } from 'node:stream';
 import { join, resolve } from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { RealClock } from '../clock.js';
 import { loadConfig } from '../config.js';
@@ -34,15 +36,21 @@ const FFPROBE = process.env.FFPROBE || 'ffprobe';
 
 const SYSTEM_RULES = readFileSync(join(ROOT, 'stage', 'system-rules.md'), 'utf8');
 
-function ensureVideo(): void {
+async function ensureVideo(): Promise<void> {
   if (existsSync(VIDEO_PATH)) return;
   if (!VIDEO_URL) throw new Error(`影片不存在：${VIDEO_PATH}，且未設定 VIDEO_URL`);
   mkdirSync(resolve(VIDEO_PATH, '..'), { recursive: true });
-  console.log('downloading video…');
   const m = VIDEO_URL.match(/\/d\/([^/]+)/) || VIDEO_URL.match(/[?&]id=([^&]+)/);
   const url = m ? `https://drive.usercontent.google.com/download?id=${m[1]}&export=download&confirm=t` : VIDEO_URL;
-  const r = spawnSync('curl', ['-sSL', '-o', VIDEO_PATH, url], { stdio: 'inherit', timeout: 600_000 });
-  if (r.status !== 0 || !existsSync(VIDEO_PATH)) throw new Error('影片下載失敗');
+  console.log('downloading video…');
+  const res = await fetch(url, { redirect: 'follow' });
+  const ct = res.headers.get('content-type') || '';
+  if (!res.ok || !res.body) throw new Error(`影片下載失敗：HTTP ${res.status}`);
+  if (ct.includes('text/html')) throw new Error('影片下載失敗：Google Drive 回傳的是網頁不是影片（檔案可能未開放「知道連結的人」檢視）');
+  const tmp = VIDEO_PATH + '.part';
+  await pipeline(Readable.fromWeb(res.body as import('node:stream/web').ReadableStream), createWriteStream(tmp));
+  renameSync(tmp, VIDEO_PATH);
+  console.log(`video downloaded: ${statSync(VIDEO_PATH).size} bytes, type ${ct}`);
 }
 
 function probeDurationMs(): number {
@@ -66,7 +74,7 @@ class BroadcastLog extends EventLog {
 }
 
 async function main(): Promise<void> {
-  ensureVideo();
+  await ensureVideo();
   const durationMs = probeDurationMs();
   const config = loadConfig(resolve(ROOT, CONFIG_PATH));
   const clock = new RealClock();
