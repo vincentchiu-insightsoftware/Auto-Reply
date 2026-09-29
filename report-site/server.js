@@ -5,9 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const dir = dirname(fileURLToPath(import.meta.url));
+// DEFAULT_PAGE=client 時，根網址直接顯示給客戶的那份（讓兩份報告可以各自部署成一張卡片）
+const root = process.env.DEFAULT_PAGE === 'client' ? 'client.html' : 'index.html';
 const pages = {
-  '/': 'index.html',        // 內部：問題、解法、參考案例
+  '/': root,
   '/client': 'client.html', // 對客戶：運作方式與為什麼標榜 AI
+  '/internal': 'index.html', // 內部：問題、解法、參考案例
 };
 const port = Number(process.env.PORT || 3000);
 
