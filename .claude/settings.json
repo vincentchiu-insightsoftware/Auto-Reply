@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Railway",
+      "mcp__Claude_Docs",
+      "Bash(npm test:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ci:*)",
+      "Bash(node dist/src/cli.js:*)",
+      "Bash(curl -s:*)",
+      "Bash(curl -sS:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
