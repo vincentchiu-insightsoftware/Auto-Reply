@@ -16,7 +16,8 @@
     "fixtures": "node dist/src/cli.js fixtures --scenario fixtures/scenario-a --minutes 30 --seed 42",
     "replay": "node dist/src/cli.js replay --scenario fixtures/scenario-a --config config/runtime.example.json --out runtime/logs/replay-a.jsonl",
     "report": "node dist/src/cli.js report runtime/logs/replay-a.jsonl",
-    "stage": "node dist/src/stage/server.js"
+    "stage": "node dist/src/stage/server.js",
+    "start": "node dist/src/stage/server.js"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

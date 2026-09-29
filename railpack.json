@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "node",
+  "packages": { "node": "22" },
+  "buildAptPackages": ["ffmpeg"],
+  "deploy": {
+    "aptPackages": ["ffmpeg"],
+    "startCommand": "node dist/src/stage/server.js"
+  }
+}
