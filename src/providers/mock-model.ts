@@ -77,7 +77,7 @@ export class MockModelProvider implements ModelProvider {
       const tail = facts && facts.kind !== 'black' ? `現在第${facts.round}局，${facts.scoreA}比${facts.scoreB}。` : '';
       let utt = `有人問${quoted}，${reaction}${tail}`;
       if (countChars(utt) > input.constraints.maxCharacters) utt = `有人問${quoted}，${reaction}`;
-      decision = { speak: true, utterance: utt, reply_to_ids: chat.map((c) => c.messageId), observation_id: input.observationId, reason_code: 'chat_reply' };
+      decision = { speak: true, utterance: utt, reply_to_ids: chat.map((c) => c.messageId), observation_id: input.observationId, reason_code: 'chat_reply', emotion: 'happy' };
     } else {
       const facts = input.frames[0]?.mockFacts;
       if (facts && facts.kind !== 'black') {
@@ -85,7 +85,7 @@ export class MockModelProvider implements ModelProvider {
         if (r < 0.15) {
           decision = { speak: false, utterance: '', reply_to_ids: [], observation_id: input.observationId, reason_code: 'no_new_information' };
         } else if (r < 0.25) {
-          decision = { speak: true, utterance: '漂亮！', reply_to_ids: [], observation_id: input.observationId, reason_code: 'game_event' };
+          decision = { speak: true, utterance: '漂亮！', reply_to_ids: [], observation_id: input.observationId, reason_code: 'game_event', emotion: 'surprised' };
         } else {
           const st = facts.status === 'clutch' ? '關鍵時刻了' : facts.status === 'push' ? '這波在推進' : '節奏還算平穩';
           decision = { speak: true, utterance: `第${facts.round}局${facts.scoreA}比${facts.scoreB}，${st}。${REACTIONS[this.rng.int(0, REACTIONS.length - 1)]}`, reply_to_ids: [], observation_id: input.observationId, reason_code: 'game_event' };

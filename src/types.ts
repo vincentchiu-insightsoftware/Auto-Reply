@@ -109,12 +109,18 @@ export const REASON_CODES = [
 ] as const;
 export type ReasonCode = (typeof REASON_CODES)[number];
 
+/** 表情：只影響 VTuber 皮的臉，不影響說話內容。 */
+export const EMOTIONS = ['neutral', 'happy', 'surprised', 'thinking', 'sorry'] as const;
+export type Emotion = (typeof EMOTIONS)[number];
+
 export interface RawDecision {
   speak: boolean;
   utterance: string;
   reply_to_ids: string[];
   observation_id: string;
   reason_code: ReasonCode;
+  /** 可省略；不合法值一律視為 neutral。 */
+  emotion?: Emotion;
 }
 
 export interface ProviderUsage {

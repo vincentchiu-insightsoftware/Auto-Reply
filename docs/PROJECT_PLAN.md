@@ -148,6 +148,8 @@ Kick webhook ──► 留言來源 ──► 去重 ──► 本機分類 ─�
 
 驗收：測試台頁面看得到皮；打留言後，聲音播放期間嘴有動、表情有變；靜音時只有待機動作；急停時嘴立刻閉上、表情回 neutral。
 
+進度（2026-09-30）：第一版已做進測試台。皮用 VRM 官方範例 Seed-san（VRM Public License 1.0，作者 VirtualCast, Inc.，需標註），畫在影片右下角；大腦輸出多了 emotion 欄位（neutral / happy / surprised / thinking / sorry），驗證器對不合法值退回 neutral；口型用瀏覽器音量分析；待機呼吸、眨眼、頭微擺。換皮方式：把 .vrm 放到 runtime/avatar/model.vrm，或設環境變數 AVATAR_URL。未做：Live2D、逐字對嘴、手部動作。
+
 ### 第二步：真實內容，輸出測試影片
 
 接真影片（ffmpeg 抽幀）、真模型（Claude，圖片輸入，結構化輸出，SDK 重試關閉）、真語音（Azure zh-TW 或 ElevenLabs，選一個），Planner 預看整支影片。留言仍用 fixture。輸出「影片 + 主持聲音」的 mp4 供使用者檢視。使用者需提供影片檔、金鑰放置方式、角色設定與費用上限。

@@ -2,7 +2,7 @@
  * 模型輸出驗證。順序：schema → ID 對應 → speak 分支 → 內容規則。
  * speak=false 且欄位為空 → 合法安靜（不算失敗）。
  */
-import { REASON_CODES, type RawDecision } from '../types.js';
+import { EMOTIONS, REASON_CODES, type Emotion, type RawDecision } from '../types.js';
 import { splitSentences, countChars, normalize, FORBIDDEN_FORMAT, HUMAN_CLAIM } from '../util/text.js';
 
 export type ValidationFail =
@@ -43,8 +43,13 @@ export function parseDecision(raw: unknown): RawDecision | null {
   if (typeof o.observation_id !== 'string') return null;
   if (typeof o.reason_code !== 'string' || !(REASON_CODES as readonly string[]).includes(o.reason_code)) return null;
   const keys = Object.keys(o);
-  if (keys.length !== 5) return null;
-  return o as unknown as RawDecision;
+  const hasEmotion = 'emotion' in o;
+  if (keys.length !== (hasEmotion ? 6 : 5)) return null;
+  if (hasEmotion && typeof o.emotion !== 'string') return null;
+  const d = o as unknown as RawDecision;
+  // 表情不合法就退回 neutral，不因此丟掉整個決定
+  d.emotion = hasEmotion && (EMOTIONS as readonly string[]).includes(o.emotion as string) ? (o.emotion as Emotion) : 'neutral';
+  return d;
 }
 
 export function validateDecision(raw: unknown, opts: ValidatorOptions): Validation {

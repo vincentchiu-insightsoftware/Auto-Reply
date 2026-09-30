@@ -608,7 +608,7 @@ export class Director {
     this.memory.pushSpoken(v.utterance);
     job.t.playStart = handle.startedAt;
     this.d.log.emit('playback_start', {
-      jobId: job.id, observationId: job.observationId, trigger: job.trigger, reason_code: v.decision.reason_code, utterance: v.utterance,
+      jobId: job.id, observationId: job.observationId, trigger: job.trigger, reason_code: v.decision.reason_code, utterance: v.utterance, emotion: v.decision.emotion ?? 'neutral',
       chars: countChars(v.utterance), short: v.short, reply_keys: replyKeys, durationMs: audio.durationMs,
       t_event: job.t.event, t_model_sent: job.t.modelSent, t_model_recv: job.t.modelRecv, t_audio_ready: job.t.audioReady, t_play_start: job.t.playStart,
       contextVersion: job.contextVersion, generation: job.generation,

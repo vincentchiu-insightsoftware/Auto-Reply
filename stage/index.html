@@ -11,7 +11,14 @@ header h1{font-size:1.05rem;margin:0}header .meta{color:var(--muted);font-size:.
 main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:12px;padding:12px;height:calc(100vh - 56px)}
 @media(max-width:900px){main{grid-template-columns:1fr;height:auto}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-height:0}
-video{width:100%;background:#000;border-radius:10px 10px 0 0}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px 10px 0 0;display:block}
+.stage{position:relative}
+.avatarbox{position:absolute;right:10px;bottom:10px;width:27%;min-width:150px;max-width:320px;aspect-ratio:3/4;max-height:88%;pointer-events:none}
+.avatarbox canvas{width:100%;height:100%;display:block}
+.avatarbox .tag{position:absolute;left:0;bottom:0;background:rgba(15,17,21,.75);color:#fff;font-size:.78rem;padding:3px 8px;border-radius:6px;border:1px solid var(--line);white-space:nowrap}
+.avatarbox .tag b{color:#ffd166}
+.avatarbox .credit{position:absolute;right:0;top:0;color:rgba(255,255,255,.55);font-size:.62rem;padding:2px 6px;background:rgba(15,17,21,.5);border-radius:6px;max-width:80%;text-align:right}
+.avatarbox.failed .credit{color:#ffb4b0}
 .bar{display:flex;gap:8px;padding:8px 10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line)}
 button{background:#232838;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}button:hover{border-color:var(--accent)}
 button.danger{border-color:var(--bad);color:#ffb4b0}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -32,7 +39,10 @@ input.name{flex:0 0 110px}
 </header>
 <main>
   <section class="panel">
-    <video id="v" src="/video" playsinline></video>
+    <div class="stage">
+      <video id="v" src="/video" playsinline></video>
+      <div class="avatarbox" id="avatarbox"><canvas id="avatarCanvas"></canvas><div class="tag"><b>AI 主播</b> 小遊 · AI 生成聲音與角色</div><div class="credit" id="avatarnote">載入角色中…</div></div>
+    </div>
     <div class="bar">
       <button class="primary" id="start">▶ 開始測試</button>
       <button id="pause">暫停 AI</button>
@@ -51,31 +61,36 @@ input.name{flex:0 0 110px}
     <form id="f"><input class="name" id="author" placeholder="你的名字" value=""><input id="text" placeholder="留言…（Enter 送出）" autocomplete="off"><button class="primary">送出</button></form>
   </section>
 </main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/","@pixiv/three-vrm":"https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.5/lib/three-vrm.module.js"}}</script>
+<script type="module" src="/avatar.js"></script>
 <script>
 const v=document.getElementById('v'),log=document.getElementById('log'),now=document.getElementById('now'),stateEl=document.getElementById('state'),stats=document.getElementById('stats'),vt=document.getElementById('vt');
 let loop=0,current=null,unlocked=false;
+const spk=new Audio();spk.preload='auto';let spkId=null;
+spk.onended=()=>{if(spkId)post('/played',{id:spkId});spkId=null;now.textContent='（等下一句）';if(window.vtuber)window.vtuber.setTalking(false);};
+let spkAttached=false;function ensureSpk(){if(!spkAttached&&window.vtuber){window.vtuber.attachAudio(spk);spkAttached=true;}if(window.vtuber)window.vtuber.unlock();}
 v.volume=0.15;document.getElementById('gv').oninput=e=>v.volume=Number(e.target.value);
 function add(cls,who,text){const d=document.createElement('div');d.className='row '+cls;d.innerHTML=(who?`<div class="who">${esc(who)}</div>`:'')+esc(text);log.appendChild(d);log.scrollTop=log.scrollHeight;while(log.children.length>300)log.removeChild(log.firstChild);}
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function ts(){return new Date().toLocaleTimeString('zh-TW',{hour12:false});}
 async function post(p,b){return fetch(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());}
-document.getElementById('start').onclick=async()=>{unlocked=true;try{await v.play();}catch(e){add('sys','','影片無法播放：'+e.message);} new Audio().play().catch(()=>{});};
+document.getElementById('start').onclick=async()=>{unlocked=true;ensureSpk();try{await v.play();}catch(e){add('sys','','影片無法播放：'+e.message);} spk.play().catch(()=>{});};
 v.addEventListener('ended',()=>{loop++;v.currentTime=0;v.play();add('sys','',`影片重播（第 ${loop+1} 輪）`);});
 setInterval(()=>{post('/playhead',{t:v.currentTime,playing:!v.paused&&!v.ended,loop});vt.textContent=`影片 ${v.currentTime.toFixed(0)}s`;},1000);
 document.getElementById('pause').onclick=()=>post('/control',{cmd:'pause'});
 document.getElementById('resume').onclick=()=>post('/control',{cmd:'resume'});
 document.getElementById('reenable').onclick=()=>post('/control',{cmd:'reenable'});
-document.getElementById('estop').onclick=()=>{if(current){current.pause();current=null;}post('/control',{cmd:'estop'});};
+document.getElementById('estop').onclick=()=>{spk.pause();spkId=null;if(window.vtuber)window.vtuber.stopNow();post('/control',{cmd:'estop'});};
 document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=document.getElementById('text');const a=document.getElementById('author').value||'同事';if(!t.value.trim())return;await post('/comment',{author:a,text:t.value});t.value='';};
 const es=new EventSource('/events');
 es.onmessage=m=>{const d=JSON.parse(m.data);
   if(d.kind==='hello'){setState(d.status.state);return;}
   if(d.kind==='comment'){add('','💬 '+d.author+' · '+ts(),d.text);return;}
-  if(d.kind==='audio'){if(d.type==='play'){if(current){current.pause();}current=new Audio('/audio/'+d.id);current.onended=()=>{post('/played',{id:d.id});now.textContent='（等下一句）';};current.play().catch(err=>add('sys','','瀏覽器擋住聲音播放，請先按「開始測試」：'+err.message));}
-    else if(d.type==='stop'){if(current){current.pause();current=null;}now.textContent='（急停）';}return;}
+  if(d.kind==='audio'){if(d.type==='play'){ensureSpk();spk.pause();spkId=d.id;spk.src='/audio/'+d.id;if(window.vtuber)window.vtuber.setTalking(true);spk.play().catch(err=>add('sys','','瀏覽器擋住聲音播放，請先按「開始測試」：'+err.message));}
+    else if(d.type==='stop'){spk.pause();spkId=null;now.textContent='（急停）';if(window.vtuber)window.vtuber.stopNow();}return;}
   if(d.kind==='log'){const e=d.ev;
     if(e.type==='state')setState(e.to);
-    else if(e.type==='playback_start'){now.innerHTML='<b>'+esc(e.utterance)+'</b>';add('ai','🤖 小遊 · '+ts()+(e.reply_keys&&e.reply_keys.length?' · 回覆留言':' · 講畫面'),e.utterance);}
+    else if(e.type==='playback_start'){if(window.vtuber)window.vtuber.setEmotion(e.emotion||'neutral');now.innerHTML='<b>'+esc(e.utterance)+'</b>';add('ai','🤖 小遊 · '+ts()+(e.reply_keys&&e.reply_keys.length?' · 回覆留言':' · 講畫面'),e.utterance);}
     else if(e.type==='silence')add('sys','',`（決定不說話：${e.reason_code}）`);
     else if(e.type==='drop'){const r=e.reason;if(/skipped_identity|unsafe_input_local|invalid_input|decision_rejected|expired|budget|paid|model_timeout|rate_limited|tts/.test(r))add('drop','',`⚠ 略過：${r}${e.detail?' · '+e.detail:''}`);}
     else if(e.type==='model_result')stats.innerHTML=`模型往返 ${(e.latencyMs/1000).toFixed(1)}s · 輸入 ${e.usage.inputTokens} tok · 輸出 ${e.usage.outputTokens} tok`;

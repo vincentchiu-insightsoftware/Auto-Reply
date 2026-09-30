@@ -28,8 +28,9 @@ const DECISION_SCHEMA = {
     reply_to_ids: { type: 'array', items: { type: 'string' } },
     observation_id: { type: 'string' },
     reason_code: { type: 'string', enum: ['chat_reply', 'game_event', 'idle_comment', 'no_new_information', 'uncertain', 'unsafe_input'] },
+    emotion: { type: 'string', enum: ['neutral', 'happy', 'surprised', 'thinking', 'sorry'] },
   },
-  required: ['speak', 'utterance', 'reply_to_ids', 'observation_id', 'reason_code'],
+  required: ['speak', 'utterance', 'reply_to_ids', 'observation_id', 'reason_code', 'emotion'],
   additionalProperties: false,
 };
 

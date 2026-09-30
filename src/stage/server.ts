@@ -33,6 +33,9 @@ const VIDEO_PATH = resolve(process.env.VIDEO_PATH || 'runtime/video/game.mp4');
 const VIDEO_URL = process.env.VIDEO_URL || '';
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE || 'ffprobe';
+// VTuber 皮：優先用 runtime/avatar/model.vrm，沒有就導向 AVATAR_URL（預設 VRM 官方範例 Seed-san，VRM Public License 1.0，作者 VirtualCast, Inc.）
+const AVATAR_PATH = resolve(process.env.AVATAR_PATH || 'runtime/avatar/model.vrm');
+const AVATAR_URL = process.env.AVATAR_URL || 'https://cdn.jsdelivr.net/gh/vrm-c/vrm-specification@master/samples/Seed-san/vrm/Seed-san.vrm';
 
 const SYSTEM_RULES = readFileSync(join(ROOT, 'stage', 'system-rules.md'), 'utf8');
 
@@ -160,6 +163,18 @@ async function main(): Promise<void> {
       }
       res.writeHead(200, { 'content-length': size, 'content-type': 'video/mp4', 'accept-ranges': 'bytes' });
       return createReadStream(VIDEO_PATH).pipe(res);
+    }
+    if (path === '/avatar.js') {
+      res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' });
+      return res.end(readFileSync(join(ROOT, 'stage', 'avatar.js')));
+    }
+    if (path === '/avatar.vrm') {
+      if (existsSync(AVATAR_PATH)) {
+        res.writeHead(200, { 'content-type': 'model/gltf-binary', 'content-length': statSync(AVATAR_PATH).size, 'cache-control': 'public, max-age=86400' });
+        return createReadStream(AVATAR_PATH).pipe(res);
+      }
+      res.writeHead(302, { location: AVATAR_URL });
+      return res.end();
     }
     if (path === '/events') {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
