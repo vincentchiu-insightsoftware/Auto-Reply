@@ -16,7 +16,7 @@
     "max_reference_characters": 4000,
     "idle_comment_interval_ms": 40000
   },
-  "model": { "provider": "claude", "model_id": "claude-opus-5-5", "timeout_ms": 15000, "max_output_tokens": 600, "retries_per_event": 0 },
+  "model": { "provider": "claude", "model_id": "claude-opus-5-5", "timeout_ms": 20000, "max_output_tokens": 600, "retries_per_event": 0 },
   "tts": { "provider": "azure", "voice_id": "zh-TW-HsiaoChenNeural", "timeout_ms": 8000, "retries_per_event": 0 },
   "speech": { "min_sentences": 1, "max_sentences": 3, "max_characters": 80, "target_min_characters": 20, "max_input_message_characters": 300 },
   "audio": { "device_id": null, "exclusive_player": true, "emergency_stop_target_ms": 1000 },
