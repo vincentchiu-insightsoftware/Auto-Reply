@@ -68,7 +68,7 @@ function broadcast(obj: unknown): void {
 class BroadcastLog extends EventLog {
   override write(ev: LogEvent): void {
     super.write(ev);
-    if (['chat_received', 'drop', 'silence', 'model_result', 'playback_start', 'playback_end', 'state', 'paused', 'resumed', 'emergency_stop', 'error', 'error_reset', 'throttle', 'source_health', 'budget_settled', 'paid_disabled', 'context_change'].includes(ev.type))
+    if (['chat_received', 'drop', 'silence', 'model_result', 'playback_start', 'playback_end', 'state', 'paused', 'resumed', 'emergency_stop', 'error', 'error_reset', 'throttle', 'source_health', 'budget_settled', 'paid_disabled', 'paid_reenabled', 'context_change'].includes(ev.type))
       broadcast({ kind: 'log', ev });
   }
 }
@@ -200,6 +200,7 @@ async function main(): Promise<void> {
       if (cmd === 'pause') director.pause('web');
       else if (cmd === 'resume') await director.resume();
       else if (cmd === 'estop') await director.emergencyStop();
+      else if (cmd === 'reenable') director.reenablePaid();
       else return json(res, 400, { error: 'unknown cmd' });
       return json(res, 200, { ok: true, state: director.state });
     }

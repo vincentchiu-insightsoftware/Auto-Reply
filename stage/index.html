@@ -38,6 +38,7 @@ input.name{flex:0 0 110px}
       <button id="pause">暫停 AI</button>
       <button id="resume">恢復</button>
       <button class="danger" id="estop">急停</button>
+      <button id="reenable" title="儲值後按這個，恢復 AI 大腦與聲音的付費呼叫">重新啟用付費呼叫</button>
       <label style="color:var(--muted);font-size:.85rem">遊戲音量 <input type="range" id="gv" min="0" max="1" step="0.05" value="0.15" style="width:90px"></label>
       <span class="meta" id="vt"></span>
     </div>
@@ -63,6 +64,7 @@ v.addEventListener('ended',()=>{loop++;v.currentTime=0;v.play();add('sys','',`�
 setInterval(()=>{post('/playhead',{t:v.currentTime,playing:!v.paused&&!v.ended,loop});vt.textContent=`影片 ${v.currentTime.toFixed(0)}s`;},1000);
 document.getElementById('pause').onclick=()=>post('/control',{cmd:'pause'});
 document.getElementById('resume').onclick=()=>post('/control',{cmd:'resume'});
+document.getElementById('reenable').onclick=()=>post('/control',{cmd:'reenable'});
 document.getElementById('estop').onclick=()=>{if(current){current.pause();current=null;}post('/control',{cmd:'estop'});};
 document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=document.getElementById('text');const a=document.getElementById('author').value||'同事';if(!t.value.trim())return;await post('/comment',{author:a,text:t.value});t.value='';};
 const es=new EventSource('/events');
@@ -78,7 +80,8 @@ es.onmessage=m=>{const d=JSON.parse(m.data);
     else if(e.type==='drop'){const r=e.reason;if(/skipped_identity|unsafe_input_local|invalid_input|decision_rejected|expired|budget|paid|model_timeout|rate_limited|tts/.test(r))add('drop','',`⚠ 略過：${r}${e.detail?' · '+e.detail:''}`);}
     else if(e.type==='model_result')stats.innerHTML=`模型往返 ${(e.latencyMs/1000).toFixed(1)}s · 輸入 ${e.usage.inputTokens} tok · 輸出 ${e.usage.outputTokens} tok`;
     else if(e.type==='budget_settled')stats.innerHTML+=` · 本小時 $${e.budget.hourUsd.toFixed(3)} / 上限 ${e.budget.hourlyLimit}`;
-    else if(e.type==='paid_disabled')add('sys','','⛔ 已停止付費呼叫：'+e.why);
+    else if(e.type==='paid_disabled')add('sys','','⛔ 已停止付費呼叫：'+e.why+'（多半是 Anthropic 帳戶沒有餘額或到達費用上限；處理好後按「重新啟用付費呼叫」）');
+    else if(e.type==='paid_reenabled')add('sys','','✅ 已重新啟用付費呼叫');
     else if(e.type==='emergency_stop')add('sys','','🛑 急停');
     else if(e.type==='paused')add('sys','','⏸ AI 暫停');
     else if(e.type==='resumed')add('sys','','▶ AI 恢復');

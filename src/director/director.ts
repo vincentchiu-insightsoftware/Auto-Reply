@@ -116,6 +116,15 @@ export class Director {
   }
 
   /** 暫停：遞增 generation、中止進行中的工作、停聲音、清槽。晚到結果一律丟棄。 */
+  /** 儲值或提高上限後，重新允許付費呼叫（模型與語音）。 */
+  reenablePaid(): void {
+    if (!this.paidDisabled) return;
+    this.paidDisabled = false;
+    this.consecutiveFailures = 0;
+    this.cooldownUntil = 0;
+    this.d.log.emit('paid_reenabled', {});
+  }
+
   pause(reason = 'manual'): void {
     if (!this.sm.can('PAUSED')) return;
     this.invalidateInflight();
