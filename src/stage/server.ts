@@ -19,6 +19,7 @@ import { VideoFrameSource } from '../sources/video.js';
 import { WebChatSource } from '../sources/web-chat.js';
 import { WebPlayer, type PlayEvent } from '../audio/web-player.js';
 import { ClaudeModelProvider } from '../providers/claude-model.js';
+import { OpenAICompatModelProvider } from '../providers/openai-compat-model.js';
 import { MockModelProvider } from '../providers/mock-model.js';
 import { AzureTtsProvider } from '../providers/azure-tts.js';
 import { MockTtsProvider } from '../providers/mock-tts.js';
@@ -93,7 +94,13 @@ async function main(): Promise<void> {
 
   let model: ModelProvider;
   let modelMode: string;
-  if (config.model.provider === 'claude' && process.env.ANTHROPIC_API_KEY) {
+  // 大腦選擇：OPENAI_API_KEY（OpenAI 相容中繼站，例如 AI Token King）> ANTHROPIC_API_KEY > mock
+  if (process.env.OPENAI_API_KEY) {
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.aitokenking.com.tw/api/v1';
+    const modelId = process.env.OPENAI_MODEL || 'gpt-5.5';
+    model = new OpenAICompatModelProvider({ baseUrl, apiKey: process.env.OPENAI_API_KEY, modelId, maxOutputTokens: config.model.max_output_tokens, timeoutMs: config.model.timeout_ms, systemRules: SYSTEM_RULES, price: config.budget.price_table ? { input: config.budget.price_table.input_per_mtok, output: config.budget.price_table.output_per_mtok } : null });
+    modelMode = `${new URL(baseUrl).hostname} (${modelId})`;
+  } else if (config.model.provider === 'claude' && process.env.ANTHROPIC_API_KEY) {
     model = new ClaudeModelProvider({ modelId: config.model.model_id ?? 'claude-opus-5-5', maxOutputTokens: config.model.max_output_tokens, effort: 'low', systemRules: SYSTEM_RULES, price: config.budget.price_table ? { input: config.budget.price_table.input_per_mtok, output: config.budget.price_table.output_per_mtok } : null });
     modelMode = `claude (${config.model.model_id})`;
   } else {
