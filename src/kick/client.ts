@@ -51,7 +51,8 @@ export function parseKickChat(payload: unknown): KickChatEvent | null {
   const p = payload as Record<string, unknown>;
   const sender = (p.sender ?? {}) as Record<string, unknown>;
   const broadcaster = (p.broadcaster ?? {}) as Record<string, unknown>;
-  const text = typeof p.content === 'string' ? p.content : '';
+  // Kick 表情符號在文字裡長這樣：[emote:1730754:emojiAwake]，換成模型看得懂的「(表情 Awake)」
+  const text = (typeof p.content === 'string' ? p.content : '').replace(/\[emote:\d+:([A-Za-z0-9_-]+)\]/g, (_m, n: string) => `(表情 ${n.replace(/^emoji/i, '')})`).trim();
   const messageId = typeof p.message_id === 'string' ? p.message_id : '';
   if (!messageId || !text.trim()) return null;
   return {

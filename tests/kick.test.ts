@@ -22,6 +22,7 @@ test('kick: payload 轉留言；空內容或沒 ID 丟掉', () => {
   const ev = parseKickChat({ message_id: 'abc', content: '小遊你好', sender: { user_id: 5, username: 'amy' }, broadcaster: { user_id: 9, channel_slug: 'xiaoyou' } });
   assert.deepEqual(ev, { messageId: 'abc', author: 'amy', text: '小遊你好', senderUserId: 5, broadcasterUserId: 9, broadcasterSlug: 'xiaoyou' });
   assert.equal(parseKickChat({ message_id: 'abc', content: '   ' }), null);
+  assert.equal(parseKickChat({ message_id: 'e1', content: '[emote:1730754:emojiAwake] 早安 [emote:1579036:emojiBlowKiss]' })?.text, '(表情 Awake) 早安 (表情 BlowKiss)');
   assert.equal(parseKickChat({ content: 'x' }), null);
   assert.equal(parseKickChat('nope'), null);
 });

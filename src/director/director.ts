@@ -546,7 +546,9 @@ export class Director {
     });
     if (!v.ok) {
       this.settle(job, modelUsd);
-      this.d.log.emit('drop', { reason: `decision_rejected:${v.reason}`, jobId: job.id, detail: v.detail ?? null, chats: observation.chatIds });
+      // schema 失敗時把模型原始輸出帶在 detail 裡（截短），不然看不出是哪個欄位出問題
+      const detail = v.detail ?? (v.reason === 'schema' ? JSON.stringify(result.decision).slice(0, 300) : null);
+      this.d.log.emit('drop', { reason: `decision_rejected:${v.reason}`, jobId: job.id, detail, chats: observation.chatIds });
       this.sm.transition('IDLE');
       this.finish(job);
       return;
