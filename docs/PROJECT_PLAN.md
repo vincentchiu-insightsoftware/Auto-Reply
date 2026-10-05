@@ -158,6 +158,14 @@ Kick webhook ──► 留言來源 ──► 去重 ──► 本機分類 ─�
 
 ### 第三步：接 Kick，雲端試播
 
+進度（2026-10-05）：Kick 接線已做進測試台，等使用者在 Kick 建 App 後填入金鑰即可。
+- 畫面：OBS 用「瀏覽器來源」擷取測試台的直播畫面頁（`/?view=live&key=…`，無按鈕、無文字框，含影片、皮、字幕、AI 標示），再由 OBS 推到 Kick。暫不做伺服器端推流。
+- 留言：Kick 官方 Events API（OAuth 2.1 + PKCE，scope `user:read channel:read events:subscribe`），訂閱 `chat.message.sent` v1 webhook 到 `/kick/webhook`；用 Kick 公鑰驗簽（RSA-SHA256，不寫死、每小時重抓）、以 message id 去重；留言進同一條管線，去重鍵 `kick:<message_id>`。
+- 控制頁多了 Kick 面板（連接 / 重新訂閱 / 中斷 / 狀態）、「本頁靜音」勾選（OBS 推流時控制頁不出聲）、直播畫面頁的播放位置優先（控制頁不覆蓋）。
+- 雲端重新部署會丟掉 token（訂閱不會丟），重按「連接 Kick」即可。
+- 使用者要做：kick.com 開 2FA → settings/developer 建 App（Redirect URL `<PUBLIC_URL>/kick/callback`，Enable Webhooks，Webhook URL `<PUBLIC_URL>/kick/webhook`）→ 把 Client ID / Secret 填進 Railway 變數 KICK_CLIENT_ID / KICK_CLIENT_SECRET → 控制頁按「連接 Kick」→ OBS 加瀏覽器來源推流 → Kick 後台設分類、成人標示、標題註明 AI 主播。
+
+
 Kick 開發者應用程式、OAuth 授權、webhook 接收、事件訂閱、推流到 Kick。在雲端主機做短時間試播，有人在旁監看。使用者需完成 Kick 應用程式註冊與授權、提供串流金鑰、決定 AI 標示方式。
 
 驗收：留言從送出到聲音回覆的實際秒數；推流穩定；守門機制在人為製造的故障下正常運作。

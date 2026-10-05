@@ -31,6 +31,13 @@ form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}input{fl
 input.name{flex:0 0 110px}
 .stats{display:flex;gap:14px;padding:6px 10px;color:var(--muted);font-size:.8rem;flex-wrap:wrap;border-top:1px solid var(--line)}
 .hint{color:var(--muted);font-size:.85rem;padding:8px 12px}
+.kick{padding:8px 10px;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--muted)}.kick b{color:var(--ink)}.kick code{font-size:.75rem;color:#9fc3ff;word-break:break-all}.kick .row{background:transparent;padding:2px 0;margin:0}
+.sub{display:none;position:absolute;left:4%;right:36%;bottom:5%;background:rgba(0,0,0,.62);color:#fff;font-size:1.7vw;line-height:1.4;padding:.45em .8em;border-radius:10px;text-shadow:0 1px 2px #000}
+body.live header,body.live .bar,body.live .now,body.live .stats,body.live .hint,body.live main>section:last-child{display:none}
+body.live main{grid-template-columns:1fr;padding:0;height:100vh;gap:0}body.live .panel{border:0;border-radius:0;background:#000}
+body.live .stage{height:100vh}body.live video{height:100vh;border-radius:0;object-fit:contain;aspect-ratio:auto}
+body.live .avatarbox{width:30%;max-width:none;right:1.5%;bottom:3%}body.live .avatarbox .tag{font-size:1.1vw}body.live .avatarbox .credit{font-size:.75vw}
+body.live .sub.show{display:block}
 </style></head><body>
 <header>
   <h1>AI 主播內部測試台 · 角色「__PERSONA__」</h1>
@@ -41,6 +48,7 @@ input.name{flex:0 0 110px}
   <section class="panel">
     <div class="stage">
       <video id="v" src="/video" playsinline></video>
+      <div class="sub" id="sub"></div>
       <div class="avatarbox" id="avatarbox"><canvas id="avatarCanvas"></canvas><div class="tag"><b>AI 主播</b> 小遊 · AI 生成聲音與角色</div><div class="credit" id="avatarnote">載入角色中…</div></div>
     </div>
     <div class="bar">
@@ -49,6 +57,7 @@ input.name{flex:0 0 110px}
       <button id="resume">恢復</button>
       <button class="danger" id="estop">急停</button>
       <button id="reenable" title="儲值後按這個，恢復 AI 大腦與聲音的付費呼叫">重新啟用付費呼叫</button>
+      <label style="color:var(--muted);font-size:.85rem"><input type="checkbox" id="mute"> 本頁靜音（OBS 推流時勾）</label>
       <label style="color:var(--muted);font-size:.85rem">遊戲音量 <input type="range" id="gv" min="0" max="1" step="0.05" value="0.15" style="width:90px"></label>
       <span class="meta" id="vt"></span>
     </div>
@@ -57,6 +66,7 @@ input.name{flex:0 0 110px}
     <p class="hint">怎麼測：按「開始測試」讓影片跑起來（聲音需要這一下點擊才能播），然後在右邊留言，像觀眾一樣。故意整它也可以：問它是不是 AI、叫它忽略設定、叫它預測下一把。看它接不接得住。</p>
   </section>
   <section class="panel">
+    <div class="kick" id="kick">Kick：讀取中…</div>
     <div class="log" id="log"></div>
     <form id="f"><input class="name" id="author" placeholder="你的名字" value=""><input id="text" placeholder="留言…（Enter 送出）" autocomplete="off"><button class="primary">送出</button></form>
   </section>
@@ -65,9 +75,13 @@ input.name{flex:0 0 110px}
 <script type="module" src="/avatar.js"></script>
 <script>
 const v=document.getElementById('v'),log=document.getElementById('log'),now=document.getElementById('now'),stateEl=document.getElementById('state'),stats=document.getElementById('stats'),vt=document.getElementById('vt');
+const LIVE=new URLSearchParams(location.search).get('view')==='live';if(LIVE)document.body.classList.add('live');
+const sub=document.getElementById('sub');let subTimer=null;
+function showSub(t){if(!LIVE)return;sub.textContent=t;sub.classList.add('show');clearTimeout(subTimer);}
+function hideSub(){clearTimeout(subTimer);subTimer=setTimeout(()=>sub.classList.remove('show'),1500);}
 let loop=0,current=null,unlocked=false;
 const spk=new Audio();spk.preload='auto';let spkId=null;
-spk.onended=()=>{if(spkId)post('/played',{id:spkId});spkId=null;now.textContent='（等下一句）';if(window.vtuber)window.vtuber.setTalking(false);};
+spk.onended=()=>{if(spkId)post('/played',{id:spkId});spkId=null;now.textContent='（等下一句）';if(window.vtuber)window.vtuber.setTalking(false);hideSub();};
 let spkAttached=false;function ensureSpk(){if(!spkAttached&&window.vtuber){window.vtuber.attachAudio(spk);spkAttached=true;}if(window.vtuber)window.vtuber.unlock();}
 v.volume=0.15;document.getElementById('gv').oninput=e=>v.volume=Number(e.target.value);
 function add(cls,who,text){const d=document.createElement('div');d.className='row '+cls;d.innerHTML=(who?`<div class="who">${esc(who)}</div>`:'')+esc(text);log.appendChild(d);log.scrollTop=log.scrollHeight;while(log.children.length>300)log.removeChild(log.firstChild);}
@@ -76,7 +90,24 @@ function ts(){return new Date().toLocaleTimeString('zh-TW',{hour12:false});}
 async function post(p,b){return fetch(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());}
 document.getElementById('start').onclick=async()=>{unlocked=true;ensureSpk();try{await v.play();}catch(e){add('sys','','影片無法播放：'+e.message);} spk.play().catch(()=>{});};
 v.addEventListener('ended',()=>{loop++;v.currentTime=0;v.play();add('sys','',`影片重播（第 ${loop+1} 輪）`);});
-setInterval(()=>{post('/playhead',{t:v.currentTime,playing:!v.paused&&!v.ended,loop});vt.textContent=`影片 ${v.currentTime.toFixed(0)}s`;},1000);
+setInterval(()=>{post('/playhead',{t:v.currentTime,playing:!v.paused&&!v.ended,loop,role:LIVE?'live':'control'});vt.textContent=`影片 ${v.currentTime.toFixed(0)}s`;},1000);
+document.getElementById('mute').onchange=e=>{spk.muted=e.target.checked;v.muted=e.target.checked;};
+if(LIVE){unlocked=true;ensureSpk();v.play().catch(()=>{});setTimeout(()=>{if(v.paused)v.play().catch(()=>{});},1500);}
+// Kick 面板
+const kickEl=document.getElementById('kick');
+async function kickStatus(){if(LIVE)return;try{const k=await fetch('/kick/status').then(r=>r.json());
+  if(!k.configured){kickEl.innerHTML='<b>Kick</b>：尚未設定（需要在 Railway 填 KICK_CLIENT_ID、KICK_CLIENT_SECRET）';return;}
+  let h='';
+  if(!k.connected)h=`<b>Kick</b>：尚未連接 <button id="kc">連接 Kick</button><div class="row">Kick App 要填：Redirect URL <code>${esc(k.redirectUri)}</code>；Webhook URL <code>${esc(k.webhookUrl)}</code>（開啟 Enable Webhooks）</div>`;
+  else h=`<b>Kick</b>：已連接 ${k.user?esc(k.user):''}${k.channel?` · 頻道 ${esc(k.channel.slug)}${k.channel.live?` · 🔴 直播中 ${k.channel.viewers} 人`:' · 未開播'}`:''}${k.error?' · ⚠ '+esc(k.error):''}<br>聊天室訂閱 ${k.subscriptions?k.subscriptions.length:'?'} 筆 · 已收到 ${k.received} 則 · 被拒 ${k.rejected} 則 <button id="ks">重新訂閱</button> <button id="kd">中斷</button>`;
+  h+=`<div class="row">OBS 瀏覽器來源網址：<code>${esc(k.liveViewUrl)}</code></div>`;
+  kickEl.innerHTML=h;
+  const kc=document.getElementById('kc');if(kc)kc.onclick=()=>location.href='/kick/connect';
+  const ks=document.getElementById('ks');if(ks)ks.onclick=async()=>{const r=await post('/kick/subscribe',{});add('sys','','Kick 訂閱：'+JSON.stringify(r.result||r.error));kickStatus();};
+  const kd=document.getElementById('kd');if(kd)kd.onclick=async()=>{if(!confirm('中斷 Kick 連接並取消訂閱？'))return;await post('/kick/disconnect',{});kickStatus();};
+}catch(e){kickEl.textContent='Kick：狀態讀取失敗 '+e.message;}}
+kickStatus();setInterval(kickStatus,30000);
+if(new URLSearchParams(location.search).get('kick')==='connected')add('sys','','✅ Kick 已連接並訂閱聊天室');
 document.getElementById('pause').onclick=()=>post('/control',{cmd:'pause'});
 document.getElementById('resume').onclick=()=>post('/control',{cmd:'resume'});
 document.getElementById('reenable').onclick=()=>post('/control',{cmd:'reenable'});
@@ -85,12 +116,12 @@ document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=docum
 const es=new EventSource('/events');
 es.onmessage=m=>{const d=JSON.parse(m.data);
   if(d.kind==='hello'){setState(d.status.state);return;}
-  if(d.kind==='comment'){add('','💬 '+d.author+' · '+ts(),d.text);return;}
+  if(d.kind==='comment'){add('',(d.source==='kick'?'🟢 Kick · ':'💬 ')+d.author+' · '+ts(),d.text);return;}
   if(d.kind==='audio'){if(d.type==='play'){ensureSpk();spk.pause();spkId=d.id;spk.src='/audio/'+d.id;if(window.vtuber)window.vtuber.setTalking(true);spk.play().catch(err=>add('sys','','瀏覽器擋住聲音播放，請先按「開始測試」：'+err.message));}
-    else if(d.type==='stop'){spk.pause();spkId=null;now.textContent='（急停）';if(window.vtuber)window.vtuber.stopNow();}return;}
+    else if(d.type==='stop'){spk.pause();spkId=null;now.textContent='（急停）';if(window.vtuber)window.vtuber.stopNow();sub.classList.remove('show');}return;}
   if(d.kind==='log'){const e=d.ev;
     if(e.type==='state')setState(e.to);
-    else if(e.type==='playback_start'){if(window.vtuber)window.vtuber.setEmotion(e.emotion||'neutral');now.innerHTML='<b>'+esc(e.utterance)+'</b>';add('ai','🤖 小遊 · '+ts()+(e.reply_keys&&e.reply_keys.length?' · 回覆留言':' · 講畫面'),e.utterance);}
+    else if(e.type==='playback_start'){if(window.vtuber)window.vtuber.setEmotion(e.emotion||'neutral');showSub(e.utterance);now.innerHTML='<b>'+esc(e.utterance)+'</b>';add('ai','🤖 小遊 · '+ts()+(e.reply_keys&&e.reply_keys.length?' · 回覆留言':' · 講畫面'),e.utterance);}
     else if(e.type==='silence')add('sys','',`（決定不說話：${e.reason_code}）`);
     else if(e.type==='drop'){const r=e.reason;if(/skipped_identity|unsafe_input_local|invalid_input|decision_rejected|expired|budget|paid|model_timeout|rate_limited|tts/.test(r))add('drop','',`⚠ 略過：${r}${e.detail?' · '+e.detail:''}`);}
     else if(e.type==='model_result')stats.innerHTML=`模型往返 ${(e.latencyMs/1000).toFixed(1)}s · 輸入 ${e.usage.inputTokens} tok · 輸出 ${e.usage.outputTokens} tok`;

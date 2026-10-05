@@ -20,6 +20,7 @@ import { WebChatSource } from '../sources/web-chat.js';
 import { WebPlayer, type PlayEvent } from '../audio/web-player.js';
 import { ClaudeModelProvider } from '../providers/claude-model.js';
 import { OpenAICompatModelProvider } from '../providers/openai-compat-model.js';
+import { KickClient, parseKickChat } from '../kick/client.js';
 import { MockModelProvider } from '../providers/mock-model.js';
 import { AzureTtsProvider } from '../providers/azure-tts.js';
 import { MockTtsProvider } from '../providers/mock-tts.js';
@@ -36,6 +37,10 @@ const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE || 'ffprobe';
 // VTuber 皮：優先用 runtime/avatar/model.vrm，沒有就導向 AVATAR_URL（預設 VRM 官方範例 Seed-san，VRM Public License 1.0，作者 VirtualCast, Inc.）
 const AVATAR_PATH = resolve(process.env.AVATAR_PATH || 'runtime/avatar/model.vrm');
+// Kick：在 kick.com/settings/developer 建 App 後填 KICK_CLIENT_ID / KICK_CLIENT_SECRET；PUBLIC_URL 是這台機器對外的網址
+const PUBLIC_URL = (process.env.PUBLIC_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`)).replace(/\/$/, '');
+const KICK_CLIENT_ID = process.env.KICK_CLIENT_ID || '';
+const KICK_CLIENT_SECRET = process.env.KICK_CLIENT_SECRET || '';
 const AVATAR_URL = process.env.AVATAR_URL || 'https://cdn.jsdelivr.net/gh/vrm-c/vrm-specification@master/samples/Seed-san/vrm/Seed-san.vrm';
 
 const SYSTEM_RULES = readFileSync(join(ROOT, 'stage', 'system-rules.md'), 'utf8');
@@ -91,6 +96,12 @@ async function main(): Promise<void> {
   const frames = new VideoFrameSource(clock, VIDEO_PATH, durationMs, { width: 960, jpegQuality: 6, changeThreshold: 6, staleMs: 6000, ffmpeg: FFMPEG });
   const chat = new WebChatSource(clock);
   const player = new WebPlayer(clock, (ev: PlayEvent) => broadcast({ kind: 'audio', ...ev }));
+  const kick = KICK_CLIENT_ID && KICK_CLIENT_SECRET
+    ? new KickClient({ clientId: KICK_CLIENT_ID, clientSecret: KICK_CLIENT_SECRET, redirectUri: `${PUBLIC_URL}/kick/callback`, tokenPath: join(ROOT, 'runtime', 'kick-token.json') })
+    : null;
+  const kickState = { lastEventAt: 0, received: 0, rejected: 0, lastError: '' };
+  // 直播畫面頁（OBS 擷取的那一頁）回報的播放位置優先；控制頁在它活著時不覆蓋
+  let livePlayheadAt = 0;
 
   let model: ModelProvider;
   let modelMode: string;
@@ -137,6 +148,12 @@ async function main(): Promise<void> {
     res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(body));
   };
+  const readRaw = (req: IncomingMessage): Promise<string> =>
+    new Promise((ok) => {
+      let s = '';
+      req.on('data', (c) => (s += c));
+      req.on('end', () => ok(s));
+    });
   const readBody = (req: IncomingMessage): Promise<Record<string, unknown>> =>
     new Promise((ok) => {
       let s = '';
@@ -150,6 +167,55 @@ async function main(): Promise<void> {
     const url = new URL(req.url || '/', 'http://x');
     const path = url.pathname;
     if (path === '/health') return json(res, 200, { ok: true, state: director.state });
+    if (req.method === 'POST' && path === '/kick/webhook') {
+      if (!kick) return json(res, 404, { error: 'kick not configured' });
+      const raw = await readRaw(req);
+      const h = (n: string) => (typeof req.headers[n] === 'string' ? (req.headers[n] as string) : undefined);
+      let v: { ok: boolean; duplicate: boolean; reason?: string };
+      try {
+        v = await kick.verifyWebhook({ 'kick-event-message-id': h('kick-event-message-id'), 'kick-event-message-timestamp': h('kick-event-message-timestamp'), 'kick-event-signature': h('kick-event-signature') }, raw);
+      } catch (e) {
+        kickState.lastError = (e as Error).message;
+        return json(res, 500, { error: 'verify failed' });
+      }
+      if (!v.ok) {
+        kickState.rejected++;
+        log.emit('kick_rejected', { reason: v.reason });
+        return json(res, 401, { error: v.reason });
+      }
+      if (v.duplicate) return json(res, 200, { ok: true, duplicate: true });
+      const type = h('kick-event-type') ?? '';
+      kickState.lastEventAt = clock.now();
+      if (type === 'chat.message.sent') {
+        let payload: unknown;
+        try { payload = JSON.parse(raw); } catch { payload = null; }
+        const ev = parseKickChat(payload);
+        if (ev) {
+          kickState.received++;
+          const m = chat.pushExternal('kick', ev.messageId, ev.author, ev.text.slice(0, 500));
+          broadcast({ kind: 'comment', author: ev.author, text: ev.text, messageId: m.messageId, source: 'kick', t: clock.now() });
+        }
+      } else {
+        log.emit('kick_event', { type });
+      }
+      return json(res, 200, { ok: true });
+    }
+    if (path === '/kick/callback') {
+      if (!kick) return json(res, 404, { error: 'kick not configured' });
+      const code = url.searchParams.get('code') ?? '';
+      const state = url.searchParams.get('state') ?? '';
+      try {
+        await kick.exchange(code, state);
+        const subs = await kick.subscribeChat();
+        log.emit('kick_connected', { subs });
+        res.writeHead(302, { location: `/?kick=connected&key=${encodeURIComponent(TOKEN)}` });
+        return res.end();
+      } catch (e) {
+        kickState.lastError = (e as Error).message;
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        return res.end(`<meta charset="utf-8"><p>Kick 連接失敗：${String((e as Error).message).replace(/</g, '&lt;')}</p><p><a href="/?key=${encodeURIComponent(TOKEN)}">回測試台</a></p>`);
+      }
+    }
     if (!authed(req)) {
       res.writeHead(401, { 'content-type': 'text/plain; charset=utf-8' });
       return res.end('需要存取碼：在網址後面加 ?key=…');
@@ -196,7 +262,33 @@ async function main(): Promise<void> {
       res.writeHead(200, { 'content-type': a.mediaType, 'content-length': a.bytes.length });
       return res.end(a.bytes);
     }
-    if (path === '/status') return json(res, 200, { ...director.status(), modelMode, ttsMode, videoDurationMs: durationMs, playhead: frames.playhead });
+    if (path === '/kick/connect') {
+      if (!kick) return json(res, 400, { error: '尚未設定 KICK_CLIENT_ID / KICK_CLIENT_SECRET' });
+      res.writeHead(302, { location: kick.authUrl() });
+      return res.end();
+    }
+    if (path === '/kick/status') {
+      const base = { configured: Boolean(kick), connected: kick?.connected() ?? false, webhookUrl: `${PUBLIC_URL}/kick/webhook`, redirectUri: `${PUBLIC_URL}/kick/callback`, liveViewUrl: `${PUBLIC_URL}/?view=live&key=${encodeURIComponent(TOKEN)}`, ...kickState };
+      if (!kick || !kick.connected()) return json(res, 200, base);
+      try {
+        const [me, ch, subs] = await Promise.all([kick.me(), kick.channel(), kick.subscriptions()]);
+        return json(res, 200, { ...base, user: me?.name ?? null, channel: ch ? { slug: ch.slug, live: ch.stream?.is_live ?? false, viewers: ch.stream?.viewer_count ?? 0, title: ch.stream_title ?? '' } : null, subscriptions: subs.map((x) => ({ event: x.event, id: x.id })) });
+      } catch (e) {
+        return json(res, 200, { ...base, error: (e as Error).message });
+      }
+    }
+    if (req.method === 'POST' && path === '/kick/subscribe') {
+      if (!kick) return json(res, 400, { error: 'kick not configured' });
+      try { return json(res, 200, { ok: true, result: await kick.subscribeChat() }); } catch (e) { return json(res, 500, { error: (e as Error).message }); }
+    }
+    if (req.method === 'POST' && path === '/kick/disconnect') {
+      if (!kick) return json(res, 400, { error: 'kick not configured' });
+      let removed = 0;
+      try { removed = await kick.unsubscribeAll(); } catch (e) { kickState.lastError = (e as Error).message; }
+      kick.forget();
+      return json(res, 200, { ok: true, removed });
+    }
+    if (path === '/status') return json(res, 200, { ...director.status(), modelMode, ttsMode, videoDurationMs: durationMs, playhead: frames.playhead, kick: { configured: Boolean(kick), connected: kick?.connected() ?? false, ...kickState } });
     if (req.method === 'POST' && path === '/comment') {
       const b = await readBody(req);
       const text = String(b.text ?? '').slice(0, 500);
@@ -208,6 +300,9 @@ async function main(): Promise<void> {
     }
     if (req.method === 'POST' && path === '/playhead') {
       const b = await readBody(req);
+      const role = String(b.role ?? 'control');
+      if (role === 'live') livePlayheadAt = clock.now();
+      else if (clock.now() - livePlayheadAt < 5000) return json(res, 200, { ok: true, ignored: 'live view active' });
       frames.playhead = { videoTimeMs: Number(b.t ?? 0) * 1000, reportedAt: clock.now(), playing: Boolean(b.playing), loop: Number(b.loop ?? 0) };
       return json(res, 200, { ok: true });
     }
@@ -228,7 +323,7 @@ async function main(): Promise<void> {
     }
     json(res, 404, { error: 'not found' });
   }).listen(PORT, () => {
-    console.log(`stage on :${PORT}  token=${TOKEN}  model=${modelMode}  tts=${ttsMode}  video=${(durationMs / 1000).toFixed(0)}s`);
+    console.log(`stage on :${PORT}  token=${TOKEN}  model=${modelMode}  tts=${ttsMode}  video=${(durationMs / 1000).toFixed(0)}s  kick=${kick ? 'configured' : 'off'}  public=${PUBLIC_URL}`);
     writeFileSync(join(ROOT, 'runtime', 'stage-token.txt'), TOKEN);
   });
 }
