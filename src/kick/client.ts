@@ -109,7 +109,11 @@ export class KickClient {
     const res = await fetch(`${KICK_ID}/oauth/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(15_000) });
     const text = await res.text();
     if (!res.ok) throw new Error(`Kick token ${res.status}: ${text.slice(0, 300)}`);
-    const d = JSON.parse(text) as { access_token: string; refresh_token: string; expires_in: number | string; scope: string };
+    const parsed = JSON.parse(text) as Record<string, unknown>;
+    // 文件寫的是平的；萬一包在 data 裡也接得住
+    const d = (typeof parsed.access_token === 'string' ? parsed : (parsed.data as Record<string, unknown>) ?? parsed) as unknown as { access_token: string; refresh_token: string; expires_in: number | string; scope: string; token_type?: string };
+    console.log('kick token response keys:', Object.keys(parsed).join(','), 'token_type:', d.token_type ?? '?', 'scope:', d.scope ?? '?', 'expires_in:', d.expires_in ?? '?');
+    if (typeof d.access_token !== 'string' || !d.access_token) throw new Error(`Kick token 回應沒有 access_token（欄位：${Object.keys(parsed).join(',')}）`);
     this.token = { access_token: d.access_token, refresh_token: d.refresh_token, expires_at: Date.now() + Number(d.expires_in) * 1000, scope: d.scope };
     mkdirSync(dirname(this.o.tokenPath), { recursive: true });
     writeFileSync(this.o.tokenPath, JSON.stringify(this.token));
@@ -121,6 +125,20 @@ export class KickClient {
       await this.tokenRequest({ grant_type: 'refresh_token', refresh_token: this.token.refresh_token });
     }
     return this.token!.access_token;
+  }
+
+  /** 不回傳 token 本身，只回傳足以除錯的資訊。 */
+  tokenInfo(): { scope: string; expiresAt: number; accessTokenLength: number; refreshTokenLength: number } | null {
+    if (!this.token) return null;
+    return { scope: this.token.scope, expiresAt: this.token.expires_at, accessTokenLength: this.token.access_token?.length ?? 0, refreshTokenLength: this.token.refresh_token?.length ?? 0 };
+  }
+
+  /** Kick 的 token 自我檢查端點：active、scope、client_id、exp。 */
+  async introspect(): Promise<unknown> {
+    const tok = await this.accessToken();
+    const res = await fetch(`${KICK_API}/public/v1/token/introspect`, { method: 'POST', headers: { authorization: `Bearer ${tok}`, accept: 'application/json' }, signal: AbortSignal.timeout(15_000) });
+    const text = await res.text();
+    return { status: res.status, body: text.slice(0, 500) };
   }
 
   forget(): void {

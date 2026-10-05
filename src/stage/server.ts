@@ -270,11 +270,14 @@ async function main(): Promise<void> {
     if (path === '/kick/status') {
       const base = { configured: Boolean(kick), connected: kick?.connected() ?? false, webhookUrl: `${PUBLIC_URL}/kick/webhook`, redirectUri: `${PUBLIC_URL}/kick/callback`, liveViewUrl: `${PUBLIC_URL}/?view=live&key=${encodeURIComponent(TOKEN)}`, ...kickState };
       if (!kick || !kick.connected()) return json(res, 200, base);
+      const tokenInfo = kick.tokenInfo();
+      let introspect: unknown = null;
+      try { introspect = await kick.introspect(); } catch (e) { introspect = { error: (e as Error).message }; }
       try {
         const [me, ch, subs] = await Promise.all([kick.me(), kick.channel(), kick.subscriptions()]);
-        return json(res, 200, { ...base, user: me?.name ?? null, channel: ch ? { slug: ch.slug, live: ch.stream?.is_live ?? false, viewers: ch.stream?.viewer_count ?? 0, title: ch.stream_title ?? '' } : null, subscriptions: subs.map((x) => ({ event: x.event, id: x.id })) });
+        return json(res, 200, { ...base, tokenInfo, introspect, user: me?.name ?? null, channel: ch ? { slug: ch.slug, live: ch.stream?.is_live ?? false, viewers: ch.stream?.viewer_count ?? 0, title: ch.stream_title ?? '' } : null, subscriptions: subs.map((x) => ({ event: x.event, id: x.id })) });
       } catch (e) {
-        return json(res, 200, { ...base, error: (e as Error).message });
+        return json(res, 200, { ...base, tokenInfo, introspect, error: (e as Error).message });
       }
     }
     if (req.method === 'POST' && path === '/kick/subscribe') {
