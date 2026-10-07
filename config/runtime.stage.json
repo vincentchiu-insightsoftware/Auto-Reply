@@ -30,16 +30,16 @@
   },
   "tts": {
     "provider": "azure",
-    "voice_id": "zh-CN-Xiaoxiao2:DragonHDFlashLatestNeural",
+    "voice_id": "zh-CN-Xiaoyou:DragonHDFlashLatestNeural",
     "timeout_ms": 8000,
     "retries_per_event": 0,
-    "style": "cheerful",
+    "style": "chat",
     "style_by_emotion": {
-      "neutral": "cheerful",
+      "neutral": "chat",
       "happy": "cheerful",
-      "surprised": "surprised",
-      "thinking": "curious",
-      "sorry": "sorry"
+      "surprised": "cute",
+      "thinking": "chat",
+      "sorry": "sad"
     }
   },
   "speech": {
