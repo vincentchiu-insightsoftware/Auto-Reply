@@ -3,7 +3,7 @@
  * speak=false 且欄位為空 → 合法安靜（不算失敗）。
  */
 import { EMOTIONS, REASON_CODES, type Emotion, type RawDecision } from '../types.js';
-import { splitSentences, countChars, normalize, FORBIDDEN_FORMAT, HUMAN_CLAIM } from '../util/text.js';
+import { splitSentences, countChars, normalize, sanitizeSpeech, FORBIDDEN_FORMAT, HUMAN_CLAIM } from '../util/text.js';
 
 export type ValidationFail =
   | 'schema'
@@ -61,7 +61,8 @@ export function validateDecision(raw: unknown, opts: ValidatorOptions): Validati
     if (d.utterance !== '' || d.reply_to_ids.length > 0) return { ok: false, reason: 'invalid_silence' };
     return { ok: true, kind: 'silence', decision: d };
   }
-  const text = d.utterance.trim();
+  // 表情符號與括號標註先清掉：字幕和語音（utterance 會原樣送去合成）都不會出現
+  const text = sanitizeSpeech(d.utterance);
   if (text.length === 0) return { ok: false, reason: 'empty' };
   const sentences = splitSentences(text);
   if (sentences.length < 1 || sentences.length > opts.maxSentences) return { ok: false, reason: 'sentence_count', detail: String(sentences.length) };

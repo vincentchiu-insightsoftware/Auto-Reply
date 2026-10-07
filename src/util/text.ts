@@ -22,7 +22,29 @@ export function normalize(text: string): string {
     .join('');
 }
 
-export const FORBIDDEN_FORMAT = /[*#`>•—–]|^\s*[-*]\s|```|根據截圖|根據圖片|依據畫面分析/m;
+/**
+ * 說話前清掉不該被唸出來的東西：表情符號、常見顏文字符號、括號裡的動作或心情標註（例如「（大笑）」「[笑]」）。
+ * 語音會把這些唸成字（例如把笑臉唸成「大笑」），字幕上也很突兀。情緒由 emotion 欄位表達。
+ * 括號只在內容短（10 字內）且不含數字時才清掉，「（輸了10）」這類帶數字的補充不動；「」『』是引用，不動。
+ */
+const EMOJI = /[\p{Extended_Pictographic}\p{Emoji_Presentation}\u{FE0F}\u{200D}\u{20E3}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}]/gu;
+const KAOMOJI_SYMBOLS = /[♡♥❤♪♫♬★☆※▽◡≧≦◕ω๑]/g;
+const BRACKET_NOTE = /[（(［\[【〔]\s*[^（()）［\]\[】〔〕\d]{1,10}?\s*[）)］\]】〕]/g;
+const LEADING_MOOD_TAG = /^(?:大笑|哈哈大笑|微笑|苦笑|偷笑|嘆氣|嘆口氣)[\s:：]+/;
+
+export function sanitizeSpeech(text: string): string {
+  return text
+    .replace(EMOJI, '')
+    .replace(BRACKET_NOTE, '')
+    .replace(KAOMOJI_SYMBOLS, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([。，、！？!?,.;:；：])/g, '$1')
+    .trim()
+    .replace(LEADING_MOOD_TAG, '')
+    .trim();
+}
+
+export const FORBIDDEN_FORMAT =/[*#`>•—–]|^\s*[-*]\s|```|根據截圖|根據圖片|依據畫面分析/m;
 
 /** 宣稱真人的句型。角色第一人稱講遊戲感受不在此列。 */
 export const HUMAN_CLAIM =

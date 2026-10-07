@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateDecision } from '../src/director/validator.js';
+import { sanitizeSpeech } from '../src/util/text.js';
 import { classifyChat } from '../src/director/classify.js';
 import { Deduper } from '../src/context/dedup.js';
 import { Budget, BudgetError } from '../src/director/budget.js';
@@ -56,6 +57,24 @@ test('validator: Markdown、破折號、根據截圖、宣稱真人、重複', (
 });
 test('validator: 關閉 block_human_claims 時不擋（設定可控）', () => {
   assert.ok(validateDecision(ok('我當然是真人啦'), { ...OPTS, blockHumanClaims: false }).ok);
+});
+test('sanitizeSpeech: 表情符號、顏文字符號、括號心情標註不會留在要唸的字裡', () => {
+  assert.equal(sanitizeSpeech('這把中了😂太好笑'), '這把中了太好笑');
+  assert.equal(sanitizeSpeech('開小！🎉🎉 這把有了'), '開小！ 這把有了');
+  assert.equal(sanitizeSpeech('（大笑）這把輸得好慘'), '這把輸得好慘');
+  assert.equal(sanitizeSpeech('哈哈[笑]我又點錯了'), '哈哈我又點錯了');
+  assert.equal(sanitizeSpeech('好險(≧▽≦)有中'), '好險有中');
+  assert.equal(sanitizeSpeech('大笑 這把輸得好慘'), '這把輸得好慘');
+  assert.equal(sanitizeSpeech('超開心♪下一把'), '超開心下一把');
+  // 帶數字的括號補充、「」引用、正常標點不動
+  assert.equal(sanitizeSpeech('我押了小（輸了10塊）。'), '我押了小（輸了10塊）。');
+  assert.equal(sanitizeSpeech('剛剛開了「大」，我押的是「小」。'), '剛剛開了「大」，我押的是「小」。');
+});
+test('validator: utterance 會被清掉表情符號後再驗證，送出去的是乾淨文字；清完變空就是 empty', () => {
+  const r = validateDecision(ok('哇這把有中😂（大笑）'), OPTS);
+  assert.ok(r.ok && r.kind === 'speak');
+  if (r.ok && r.kind === 'speak') assert.equal(r.utterance, '哇這把有中');
+  assert.equal((validateDecision(ok('😂😂（大笑）'), OPTS) as { reason: string }).reason, 'empty');
 });
 
 const msg = (text: string): ChatMessage => ({ messageId: 'x', idStability: 'stable', source: 's', text, receivedAt: 0 });

@@ -19,7 +19,7 @@
     "max_chat_messages": 12,
     "max_chat_characters": 2000,
     "max_reference_characters": 4000,
-    "idle_comment_interval_ms": 40000
+    "idle_comment_interval_ms": 18000
   },
   "model": {
     "provider": "claude",
