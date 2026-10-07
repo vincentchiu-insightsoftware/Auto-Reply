@@ -568,7 +568,7 @@ export class Director {
     let audio;
     try {
       audio = await this.withTimeout(
-        this.d.tts.synthesize({ text: v.utterance, voiceId: this.d.persona.voice_id, rate: 1 }, ctl.signal),
+        this.d.tts.synthesize({ text: v.utterance, voiceId: this.d.persona.voice_id, rate: 1, emotion: v.decision.emotion ?? 'neutral' }, ctl.signal),
         cfg.tts.timeout_ms, ctl, () => new TtsError('tts timeout'),
       );
     } catch (e) {

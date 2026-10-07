@@ -52,3 +52,11 @@ test('azure: 金鑰或區域含非 ASCII（例如貼成中文佔位字）要在�
   assert.match(validateAzureCredentials('abc', '東亞')!, /AZURE_SPEECH_REGION 第 1 個字元/);
   assert.throws(() => new AzureTtsProvider({ key: '把金鑰放這裡', region: 'eastasia', voice: 'v' }), (e: unknown) => e instanceof TtsError && /AZURE_SPEECH_KEY/.test((e as Error).message));
 });
+
+test('azure ssml: 風格包成 express-as；zh-CN 聲音不套注音詞典', () => {
+  const ssml = buildSsml('垃圾', { voice: 'zh-CN-Xiaoxiao2:DragonHDFlashLatestNeural', locale: 'zh-CN', rate: 1, lexicon: { version: 1, locale: 'zh-TW', entries: { 垃圾: 'ㄌㄜˋ ㄙㄜˋ' } }, style: 'cheerful' });
+  assert.match(ssml, /<mstts:express-as style="cheerful">垃圾<\/mstts:express-as>/);
+  assert.doesNotMatch(ssml, /phoneme/);
+  const tw = buildSsml('垃圾', { voice: 'zh-TW-HsiaoChenNeural', locale: 'zh-TW', rate: 1, lexicon: { version: 1, locale: 'zh-TW', entries: { 垃圾: 'ㄌㄜˋ ㄙㄜˋ' } } });
+  assert.match(tw, /phoneme/);
+});

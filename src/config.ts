@@ -19,7 +19,7 @@ export interface RuntimeConfig {
     idle_comment_interval_ms: number;
   };
   model: { provider: string; model_id: string | null; timeout_ms: number; max_output_tokens: number; retries_per_event: number };
-  tts: { provider: string; voice_id: string | null; timeout_ms: number; retries_per_event: number };
+  tts: { provider: string; voice_id: string | null; timeout_ms: number; retries_per_event: number; style?: string | null; style_by_emotion?: Record<string, string> | null };
   speech: { min_sentences: number; max_sentences: number; max_characters: number; target_min_characters: number; max_input_message_characters: number };
   audio: { device_id: string | null; exclusive_player: boolean; emergency_stop_target_ms: number };
   budget: {

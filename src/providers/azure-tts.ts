@@ -29,6 +29,10 @@ export interface AzureTtsOptions {
   /** 測試可注入 fetch */
   fetchImpl?: typeof fetch;
   outputFormat?: string;
+  /** 預設說話風格（支援風格的聲音才有效，例如 HD 聲音的 cheerful） */
+  style?: string | null;
+  /** 情緒 → 風格；沒對到就用預設 style */
+  styleByEmotion?: Record<string, string> | null;
 }
 
 export const AZURE_ZH_TW_VOICES = ['zh-TW-HsiaoChenNeural', 'zh-TW-HsiaoYuNeural', 'zh-TW-YunJheNeural'] as const;
@@ -57,15 +61,23 @@ export function applyLexicon(text: string, lexicon: Lexicon | null | undefined):
   return out;
 }
 
-export function buildSsml(text: string, opts: { voice: string; locale: string; rate: number; lexicon?: Lexicon | null }): string {
+export function buildSsml(text: string, opts: { voice: string; locale: string; rate: number; lexicon?: Lexicon | null; style?: string | null }): string {
   const ratePct = Math.round((opts.rate - 1) * 100);
-  const inner = applyLexicon(text, opts.lexicon);
+  // 注音 phoneme 只有 zh-TW 聲音吃得下；其他聲音（例如 zh-CN HD）只靠替字表
+  const inner = applyLexicon(text, opts.voice.startsWith('zh-TW') ? opts.lexicon : null);
   // 空的 <prosody> 會被 Azure 以 400 拒絕（2026-09-23 實測），原速時不包
-  const body = ratePct === 0 ? inner : `<prosody rate="${ratePct > 0 ? '+' : ''}${ratePct}%">${inner}</prosody>`;
+  let body = ratePct === 0 ? inner : `<prosody rate="${ratePct > 0 ? '+' : ''}${ratePct}%">${inner}</prosody>`;
+  if (opts.style) body = `<mstts:express-as style="${escapeXml(opts.style)}">${body}</mstts:express-as>`;
   return (
-    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${opts.locale}">` +
+    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="${opts.locale}">` +
     `<voice name="${escapeXml(opts.voice)}">${body}</voice></speak>`
   );
+}
+
+/** 從聲音名稱推語系：zh-TW-… → zh-TW，zh-CN-… → zh-CN；推不出來就 zh-TW。 */
+export function localeForVoice(voice: string): string {
+  const m = /^([a-z]{2}-[A-Z]{2})-/.exec(voice);
+  return m ? m[1]! : 'zh-TW';
 }
 
 /** 從 RIFF/WAVE 標頭算時長（PCM）。不是 WAV 就回 null。 */
@@ -123,7 +135,8 @@ export class AzureTtsProvider implements TtsProvider {
     const voice = req.voiceId ?? this.o.voice;
     const sub = applyHomophones(req.text, this.o.homophones);
     this.lastHomophoneHits = sub.hits;
-    const ssml = buildSsml(sub.text, { voice, locale: this.o.locale ?? 'zh-TW', rate: req.rate ?? 1, lexicon: this.o.lexicon ?? null });
+    const style = (req.emotion && this.o.styleByEmotion?.[req.emotion]) || this.o.style || null;
+    const ssml = buildSsml(sub.text, { voice, locale: this.o.locale ?? localeForVoice(voice), rate: req.rate ?? 1, lexicon: this.o.lexicon ?? null, style });
     const url = `https://${this.o.region}.tts.speech.microsoft.com/cognitiveservices/v1`;
     const f = this.o.fetchImpl ?? fetch;
     this.u.calls++;

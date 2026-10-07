@@ -121,7 +121,7 @@ async function main(): Promise<void> {
   let tts: TtsProvider;
   let ttsMode: string;
   if (config.tts.provider === 'azure' && process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION) {
-    tts = AzureTtsProvider.fromEnv(config.tts.voice_id ?? 'zh-TW-HsiaoChenNeural', { homophones, pricePerMillionChars: config.budget.price_table?.tts_per_mchar ?? null });
+    tts = AzureTtsProvider.fromEnv(config.tts.voice_id ?? 'zh-TW-HsiaoChenNeural', { homophones, pricePerMillionChars: config.budget.price_table?.tts_per_mchar ?? null, style: config.tts.style ?? null, styleByEmotion: config.tts.style_by_emotion ?? null });
     ttsMode = `azure (${config.tts.voice_id})`;
   } else {
     tts = new MockTtsProvider(clock, null);

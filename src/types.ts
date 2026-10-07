@@ -148,6 +148,8 @@ export interface TtsRequest {
   text: string;
   voiceId: string | null;
   rate?: number;
+  /** 這句話的情緒，支援風格的聲音會用它選說話風格 */
+  emotion?: Emotion;
 }
 
 export interface TtsResult {
