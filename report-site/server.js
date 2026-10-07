@@ -19,7 +19,8 @@ createServer((req, res) => {
     return res.end();
   }
   if (path === '/listen' || path.startsWith('/listen/')) {
-    const rel = path === '/listen' ? 'index.html' : path.slice('/listen/'.length);
+    let rel = path === '/listen' ? 'index.html' : path.slice('/listen/'.length);
+    try { rel = decodeURIComponent(rel); } catch { rel = ''; }
     if (!/^[\w.\u4e00-\u9fff-]+$/.test(rel)) { res.writeHead(404); return res.end(); }
     const f = join(dir, 'listen', rel);
     if (!existsSync(f)) { res.writeHead(404); return res.end(); }
