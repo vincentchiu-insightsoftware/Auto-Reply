@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小遊聲音盲聽測試</title>
+<style>
+:root{--ink:#1f2328;--muted:#59636e;--line:#d9dee3;--soft:#f6f8fa;--accent:#0b5cad}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.7;font-size:16px;background:#fff}
+main{max-width:820px;margin:0 auto;padding:32px 18px 80px}
+h1{font-size:1.6rem;margin:0 0 6px}.lead{background:var(--soft);border-left:4px solid var(--accent);padding:12px 16px;margin:14px 0 26px}
+.voice{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:18px 0}
+.voice h2{margin:0 0 8px;font-size:1.2rem}
+.clip{display:grid;grid-template-columns:1fr 300px;gap:10px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
+.clip .t{font-size:.95rem;color:var(--muted)}audio{width:100%}
+.rate{margin-top:12px;background:var(--soft);border-radius:8px;padding:10px 12px;font-size:.95rem}
+.rate>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0}
+.stars label{margin-left:8px;cursor:pointer}.note{width:100%;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:6px}
+button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:12px 18px;font-size:1rem;cursor:pointer}
+textarea{width:100%;height:220px;margin-top:10px;font-family:ui-monospace,monospace;font-size:.9rem;padding:10px;border:1px solid var(--line);border-radius:8px}
+@media(max-width:700px){.clip{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1>小遊聲音盲聽測試</h1>
+<div class="meta" style="color:var(--muted)">2026 年 10 月 7 日 · 六個聲音 × 五句小遊實際講過的話</div>
+<p class="lead">六個聲音只用甲到己標示，不知道是哪一家、哪一個，請憑耳朵打分。每個聲音三個分數（1 最差、5 最好），聽完按最下面的按鈕，把產生的文字整段貼回給我。建議用耳機，每句至少聽一次。</p>
+<section class="voice" data-lab="甲">
+  <h2>聲音 甲</h2>
+  <div class="clip"><div class="t">1. 你好呀，歡迎來看我手忙腳亂。這把我先看著，大小兩邊目前都還沒再補。</div><audio controls preload="none" src="/listen/甲1.mp3"></audio></div><div class="clip"><div class="t">2. 阿明，這個我不能幫你押哪邊啦，我就當轉播員看節奏，不當下注軍師。</div><audio controls preload="none" src="/listen/甲2.mp3"></audio></div><div class="clip"><div class="t">3. 上面跳出我贏了，這把算是有回一口血。不是什麼大爆發，但至少沒有白忙一場。</div><audio controls preload="none" src="/listen/甲3.mp3"></audio></div><div class="clip"><div class="t">4. 我這把又放到大這邊，畫面上是 20，小那邊是 0。手又比腦快一點，先等它開。</div><audio controls preload="none" src="/listen/甲4.mp3"></audio></div><div class="clip"><div class="t">5. 我是 AI 主播小遊啦，負責陪大家看畫面節奏，有時候也會傻一下。</div><audio controls preload="none" src="/listen/甲5.mp3"></audio></div>
+  <div class="rate">
+    <div>自然度（像不像人在講話）<span class="stars" data-k="natural"><label><input type="radio" name="甲-natural" value="1">1</label><label><input type="radio" name="甲-natural" value="2">2</label><label><input type="radio" name="甲-natural" value="3">3</label><label><input type="radio" name="甲-natural" value="4">4</label><label><input type="radio" name="甲-natural" value="5">5</label></span></div>
+    <div>適合小遊這個角色<span class="stars" data-k="fit"><label><input type="radio" name="甲-fit" value="1">1</label><label><input type="radio" name="甲-fit" value="2">2</label><label><input type="radio" name="甲-fit" value="3">3</label><label><input type="radio" name="甲-fit" value="4">4</label><label><input type="radio" name="甲-fit" value="5">5</label></span></div>
+    <div>口音與用詞聽起來順不順<span class="stars" data-k="accent"><label><input type="radio" name="甲-accent" value="1">1</label><label><input type="radio" name="甲-accent" value="2">2</label><label><input type="radio" name="甲-accent" value="3">3</label><label><input type="radio" name="甲-accent" value="4">4</label><label><input type="radio" name="甲-accent" value="5">5</label></span></div>
+    <input class="note" name="甲-note" placeholder="一句話感想（可不填）">
+  </div>
+</section><section class="voice" data-lab="乙">
+  <h2>聲音 乙</h2>
+  <div class="clip"><div class="t">1. 你好呀，歡迎來看我手忙腳亂。這把我先看著，大小兩邊目前都還沒再補。</div><audio controls preload="none" src="/listen/乙1.mp3"></audio></div><div class="clip"><div class="t">2. 阿明，這個我不能幫你押哪邊啦，我就當轉播員看節奏，不當下注軍師。</div><audio controls preload="none" src="/listen/乙2.mp3"></audio></div><div class="clip"><div class="t">3. 上面跳出我贏了，這把算是有回一口血。不是什麼大爆發，但至少沒有白忙一場。</div><audio controls preload="none" src="/listen/乙3.mp3"></audio></div><div class="clip"><div class="t">4. 我這把又放到大這邊，畫面上是 20，小那邊是 0。手又比腦快一點，先等它開。</div><audio controls preload="none" src="/listen/乙4.mp3"></audio></div><div class="clip"><div class="t">5. 我是 AI 主播小遊啦，負責陪大家看畫面節奏，有時候也會傻一下。</div><audio controls preload="none" src="/listen/乙5.mp3"></audio></div>
+  <div class="rate">
+    <div>自然度（像不像人在講話）<span class="stars" data-k="natural"><label><input type="radio" name="乙-natural" value="1">1</label><label><input type="radio" name="乙-natural" value="2">2</label><label><input type="radio" name="乙-natural" value="3">3</label><label><input type="radio" name="乙-natural" value="4">4</label><label><input type="radio" name="乙-natural" value="5">5</label></span></div>
+    <div>適合小遊這個角色<span class="stars" data-k="fit"><label><input type="radio" name="乙-fit" value="1">1</label><label><input type="radio" name="乙-fit" value="2">2</label><label><input type="radio" name="乙-fit" value="3">3</label><label><input type="radio" name="乙-fit" value="4">4</label><label><input type="radio" name="乙-fit" value="5">5</label></span></div>
+    <div>口音與用詞聽起來順不順<span class="stars" data-k="accent"><label><input type="radio" name="乙-accent" value="1">1</label><label><input type="radio" name="乙-accent" value="2">2</label><label><input type="radio" name="乙-accent" value="3">3</label><label><input type="radio" name="乙-accent" value="4">4</label><label><input type="radio" name="乙-accent" value="5">5</label></span></div>
+    <input class="note" name="乙-note" placeholder="一句話感想（可不填）">
+  </div>
+</section><section class="voice" data-lab="丙">
+  <h2>聲音 丙</h2>
+  <div class="clip"><div class="t">1. 你好呀，歡迎來看我手忙腳亂。這把我先看著，大小兩邊目前都還沒再補。</div><audio controls preload="none" src="/listen/丙1.mp3"></audio></div><div class="clip"><div class="t">2. 阿明，這個我不能幫你押哪邊啦，我就當轉播員看節奏，不當下注軍師。</div><audio controls preload="none" src="/listen/丙2.mp3"></audio></div><div class="clip"><div class="t">3. 上面跳出我贏了，這把算是有回一口血。不是什麼大爆發，但至少沒有白忙一場。</div><audio controls preload="none" src="/listen/丙3.mp3"></audio></div><div class="clip"><div class="t">4. 我這把又放到大這邊，畫面上是 20，小那邊是 0。手又比腦快一點，先等它開。</div><audio controls preload="none" src="/listen/丙4.mp3"></audio></div><div class="clip"><div class="t">5. 我是 AI 主播小遊啦，負責陪大家看畫面節奏，有時候也會傻一下。</div><audio controls preload="none" src="/listen/丙5.mp3"></audio></div>
+  <div class="rate">
+    <div>自然度（像不像人在講話）<span class="stars" data-k="natural"><label><input type="radio" name="丙-natural" value="1">1</label><label><input type="radio" name="丙-natural" value="2">2</label><label><input type="radio" name="丙-natural" value="3">3</label><label><input type="radio" name="丙-natural" value="4">4</label><label><input type="radio" name="丙-natural" value="5">5</label></span></div>
+    <div>適合小遊這個角色<span class="stars" data-k="fit"><label><input type="radio" name="丙-fit" value="1">1</label><label><input type="radio" name="丙-fit" value="2">2</label><label><input type="radio" name="丙-fit" value="3">3</label><label><input type="radio" name="丙-fit" value="4">4</label><label><input type="radio" name="丙-fit" value="5">5</label></span></div>
+    <div>口音與用詞聽起來順不順<span class="stars" data-k="accent"><label><input type="radio" name="丙-accent" value="1">1</label><label><input type="radio" name="丙-accent" value="2">2</label><label><input type="radio" name="丙-accent" value="3">3</label><label><input type="radio" name="丙-accent" value="4">4</label><label><input type="radio" name="丙-accent" value="5">5</label></span></div>
+    <input class="note" name="丙-note" placeholder="一句話感想（可不填）">
+  </div>
+</section><section class="voice" data-lab="丁">
+  <h2>聲音 丁</h2>
+  <div class="clip"><div class="t">1. 你好呀，歡迎來看我手忙腳亂。這把我先看著，大小兩邊目前都還沒再補。</div><audio controls preload="none" src="/listen/丁1.mp3"></audio></div><div class="clip"><div class="t">2. 阿明，這個我不能幫你押哪邊啦，我就當轉播員看節奏，不當下注軍師。</div><audio controls preload="none" src="/listen/丁2.mp3"></audio></div><div class="clip"><div class="t">3. 上面跳出我贏了，這把算是有回一口血。不是什麼大爆發，但至少沒有白忙一場。</div><audio controls preload="none" src="/listen/丁3.mp3"></audio></div><div class="clip"><div class="t">4. 我這把又放到大這邊，畫面上是 20，小那邊是 0。手又比腦快一點，先等它開。</div><audio controls preload="none" src="/listen/丁4.mp3"></audio></div><div class="clip"><div class="t">5. 我是 AI 主播小遊啦，負責陪大家看畫面節奏，有時候也會傻一下。</div><audio controls preload="none" src="/listen/丁5.mp3"></audio></div>
+  <div class="rate">
+    <div>自然度（像不像人在講話）<span class="stars" data-k="natural"><label><input type="radio" name="丁-natural" value="1">1</label><label><input type="radio" name="丁-natural" value="2">2</label><label><input type="radio" name="丁-natural" value="3">3</label><label><input type="radio" name="丁-natural" value="4">4</label><label><input type="radio" name="丁-natural" value="5">5</label></span></div>
+    <div>適合小遊這個角色<span class="stars" data-k="fit"><label><input type="radio" name="丁-fit" value="1">1</label><label><input type="radio" name="丁-fit" value="2">2</label><label><input type="radio" name="丁-fit" value="3">3</label><label><input type="radio" name="丁-fit" value="4">4</label><label><input type="radio" name="丁-fit" value="5">5</label></span></div>
+    <div>口音與用詞聽起來順不順<span class="stars" data-k="accent"><label><input type="radio" name="丁-accent" value="1">1</label><label><input type="radio" name="丁-accent" value="2">2</label><label><input type="radio" name="丁-accent" value="3">3</label><label><input type="radio" name="丁-accent" value="4">4</label><label><input type="radio" name="丁-accent" value="5">5</label></span></div>
+    <input class="note" name="丁-note" placeholder="一句話感想（可不填）">
+  </div>
+</section><section class="voice" data-lab="戊">
+  <h2>聲音 戊</h2>
+  <div class="clip"><div class="t">1. 你好呀，歡迎來看我手忙腳亂。這把我先看著，大小兩邊目前都還沒再補。</div><audio controls preload="none" src="/listen/戊1.mp3"></audio></div><div class="clip"><div class="t">2. 阿明，這個我不能幫你押哪邊啦，我就當轉播員看節奏，不當下注軍師。</div><audio controls preload="none" src="/listen/戊2.mp3"></audio></div><div class="clip"><div class="t">3. 上面跳出我贏了，這把算是有回一口血。不是什麼大爆發，但至少沒有白忙一場。</div><audio controls preload="none" src="/listen/戊3.mp3"></audio></div><div class="clip"><div class="t">4. 我這把又放到大這邊，畫面上是 20，小那邊是 0。手又比腦快一點，先等它開。</div><audio controls preload="none" src="/listen/戊4.mp3"></audio></div><div class="clip"><div class="t">5. 我是 AI 主播小遊啦，負責陪大家看畫面節奏，有時候也會傻一下。</div><audio controls preload="none" src="/listen/戊5.mp3"></audio></div>
+  <div class="rate">
+    <div>自然度（像不像人在講話）<span class="stars" data-k="natural"><label><input type="radio" name="戊-natural" value="1">1</label><label><input type="radio" name="戊-natural" value="2">2</label><label><input type="radio" name="戊-natural" value="3">3</label><label><input type="radio" name="戊-natural" value="4">4</label><label><input type="radio" name="戊-natural" value="5">5</label></span></div>
+    <div>適合小遊這個角色<span class="stars" data-k="fit"><label><input type="radio" name="戊-fit" value="1">1</label><label><input type="radio" name="戊-fit" value="2">2</label><label><input type="radio" name="戊-fit" value="3">3</label><label><input type="radio" name="戊-fit" value="4">4</label><label><input type="radio" name="戊-fit" value="5">5</label></span></div>
+    <div>口音與用詞聽起來順不順<span class="stars" data-k="accent"><label><input type="radio" name="戊-accent" value="1">1</label><label><input type="radio" name="戊-accent" value="2">2</label><label><input type="radio" name="戊-accent" value="3">3</label><label><input type="radio" name="戊-accent" value="4">4</label><label><input type="radio" name="戊-accent" value="5">5</label></span></div>
+    <input class="note" name="戊-note" placeholder="一句話感想（可不填）">
+  </div>
+</section><section class="voice" data-lab="己">
+  <h2>聲音 己</h2>
+  <div class="clip"><div class="t">1. 你好呀，歡迎來看我手忙腳亂。這把我先看著，大小兩邊目前都還沒再補。</div><audio controls preload="none" src="/listen/己1.mp3"></audio></div><div class="clip"><div class="t">2. 阿明，這個我不能幫你押哪邊啦，我就當轉播員看節奏，不當下注軍師。</div><audio controls preload="none" src="/listen/己2.mp3"></audio></div><div class="clip"><div class="t">3. 上面跳出我贏了，這把算是有回一口血。不是什麼大爆發，但至少沒有白忙一場。</div><audio controls preload="none" src="/listen/己3.mp3"></audio></div><div class="clip"><div class="t">4. 我這把又放到大這邊，畫面上是 20，小那邊是 0。手又比腦快一點，先等它開。</div><audio controls preload="none" src="/listen/己4.mp3"></audio></div><div class="clip"><div class="t">5. 我是 AI 主播小遊啦，負責陪大家看畫面節奏，有時候也會傻一下。</div><audio controls preload="none" src="/listen/己5.mp3"></audio></div>
+  <div class="rate">
+    <div>自然度（像不像人在講話）<span class="stars" data-k="natural"><label><input type="radio" name="己-natural" value="1">1</label><label><input type="radio" name="己-natural" value="2">2</label><label><input type="radio" name="己-natural" value="3">3</label><label><input type="radio" name="己-natural" value="4">4</label><label><input type="radio" name="己-natural" value="5">5</label></span></div>
+    <div>適合小遊這個角色<span class="stars" data-k="fit"><label><input type="radio" name="己-fit" value="1">1</label><label><input type="radio" name="己-fit" value="2">2</label><label><input type="radio" name="己-fit" value="3">3</label><label><input type="radio" name="己-fit" value="4">4</label><label><input type="radio" name="己-fit" value="5">5</label></span></div>
+    <div>口音與用詞聽起來順不順<span class="stars" data-k="accent"><label><input type="radio" name="己-accent" value="1">1</label><label><input type="radio" name="己-accent" value="2">2</label><label><input type="radio" name="己-accent" value="3">3</label><label><input type="radio" name="己-accent" value="4">4</label><label><input type="radio" name="己-accent" value="5">5</label></span></div>
+    <input class="note" name="己-note" placeholder="一句話感想（可不填）">
+  </div>
+</section>
+<div style="margin-top:26px"><button id="go">產生結果文字</button>
+<textarea id="out" placeholder="按上面的按鈕後，結果會出現在這裡，全選複製貼回去即可。" readonly></textarea></div>
+<script>
+const LABS=["甲", "乙", "丙", "丁", "戊", "己"];
+document.getElementById('go').onclick=()=>{
+  const g=(n)=>{const e=document.querySelector(`input[name="${n}"]:checked`);return e?e.value:'-';};
+  let s='小遊聲音盲聽結果 '+new Date().toLocaleString('zh-TW')+'\n';
+  for(const l of LABS){const note=document.querySelector(`input[name="${l}-note"]`).value.trim();s+=`${l}：自然 ${g(l+'-natural')} / 適合 ${g(l+'-fit')} / 口音 ${g(l+'-accent')}${note?' / '+note:''}\n`;}
+  document.getElementById('out').value=s;document.getElementById('out').select();
+};
+</script></main></body></html>
