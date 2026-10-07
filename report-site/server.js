@@ -1,32 +1,27 @@
-// 極簡靜態網頁伺服器：多個報告頁面，供 Railway 部署。
+// 極簡靜態網頁伺服器：單一報告頁，供 Railway 部署。舊的 /client、/internal 路徑一律導回首頁。
 import { createServer } from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const dir = dirname(fileURLToPath(import.meta.url));
-// DEFAULT_PAGE=client 時，根網址直接顯示給客戶的那份（讓兩份報告可以各自部署成一張卡片）
-const root = process.env.DEFAULT_PAGE === 'client' ? 'client.html' : 'index.html';
-const pages = {
-  '/': root,
-  '/client': 'client.html', // 對客戶：運作方式與為什麼標榜 AI
-  '/internal': 'index.html', // 內部：問題、解法、參考案例
-};
 const port = Number(process.env.PORT || 3000);
+const html = () => readFileSync(join(dir, 'index.html'));
 
 createServer((req, res) => {
   const path = (req.url || '/').split('?')[0].replace(/\/+$/, '') || '/';
   if (path === '/health') {
     res.writeHead(200, { 'content-type': 'text/plain' });
-    res.end('ok');
-    return;
+    return res.end('ok');
   }
-  const file = pages[path];
-  if (!file || !existsSync(join(dir, file))) {
+  if (path === '/client' || path === '/internal') {
+    res.writeHead(302, { location: '/' });
+    return res.end();
+  }
+  if (path !== '/') {
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
-    res.end('not found');
-    return;
+    return res.end('not found');
   }
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
-  res.end(readFileSync(join(dir, file)));
+  res.end(html());
 }).listen(port, () => console.log(`report site on :${port}`));
