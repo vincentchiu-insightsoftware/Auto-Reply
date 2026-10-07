@@ -62,26 +62,37 @@ function resize() {
 }
 
 function frameCamera() {
+  // 依「頭骨到頭頂」的高度決定鏡頭距離，不同身高、不同頭身比的模型都能框到臉加肩膀
   const head = vrm.humanoid.getNormalizedBoneNode('head');
   const p = new THREE.Vector3();
   vrm.scene.updateMatrixWorld(true);
   head.getWorldPosition(p);
-  // head 骨頭在脖子上端；臉的中心約再往上 8 公分
-  camera.position.set(0, p.y + 0.07, 0.95);
-  camera.lookAt(0, p.y + 0.04, 0);
+  const box = new THREE.Box3().setFromObject(vrm.scene);
+  const h = Math.max(0.12, box.max.y - p.y); // 頭骨到頭頂（含頭髮）
+  const targetY = p.y + 0.2 * h;
+  const dist = (2.3 * h) / (2 * Math.tan((camera.fov * Math.PI) / 360));
+  camera.position.set(0, targetY + 0.02, dist);
+  camera.lookAt(0, targetY, 0);
 }
 
 function poseArms() {
   const h = vrm.humanoid;
   const lu = h.getNormalizedBoneNode('leftUpperArm'), ru = h.getNormalizedBoneNode('rightUpperArm');
   const ll = h.getNormalizedBoneNode('leftLowerArm'), rl = h.getNormalizedBoneNode('rightLowerArm');
-  // 左手在世界 +X 側就往 -Z 方向轉才會下垂；反之相反
-  const lp = new THREE.Vector3(); lu.getWorldPosition(lp);
-  armSign = lp.x > 0 ? -1 : 1;
-  if (lu) lu.rotation.z = armSign * 1.15;
-  if (ru) ru.rotation.z = -armSign * 1.15;
-  if (ll) ll.rotation.z = armSign * 0.2;
-  if (rl) rl.rotation.z = -armSign * 0.2;
+  const lh = h.getNormalizedBoneNode('leftHand'), rh = h.getNormalizedBoneNode('rightHand');
+  if (!lu || !ru) return;
+  const apply = (sign) => {
+    lu.rotation.z = sign * 1.15; ru.rotation.z = -sign * 1.15;
+    if (ll) ll.rotation.z = sign * 0.2;
+    if (rl) rl.rotation.z = -sign * 0.2;
+    vrm.humanoid.update();
+    vrm.scene.updateMatrixWorld(true);
+  };
+  // 先試一個方向，量手有沒有真的在肩膀下面；VRM0 與 VRM1 的軸向不同，用結果判斷最保險
+  const y = (o) => { const v = new THREE.Vector3(); o.getWorldPosition(v); return v.y; };
+  armSign = -1;
+  apply(armSign);
+  if (lh && y(lh) > y(lu)) { armSign = 1; apply(armSign); }
 }
 
 function animate() {
@@ -148,7 +159,7 @@ async function main() {
     frameCamera();
     const meta = vrm.meta || {};
     const author = (meta.authors && meta.authors[0]) || meta.author || '';
-    say(`角色：${meta.name || 'VRM'}${author ? ' · ' + author : ''}`);
+    say(`角色：${meta.name || meta.title || 'VRM'}${author ? ' · ' + author : ''}`);
     window.__vrm = vrm; window.__THREE = THREE;
     window.avatarReady = true;
     animate();
